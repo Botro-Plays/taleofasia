@@ -1,10 +1,22 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { PageShell } from '@/app/components/PageShell';
-import { Save, Plus, Trash2, Edit3, X, Eye, EyeOff, Upload } from 'lucide-react';
+import { Save, Plus, Trash2, Edit3, X, Eye, EyeOff, Upload, Bold, Italic, Link, ImageIcon } from 'lucide-react';
+
+function markupToHtml(text: string): string {
+  const html = text
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;max-height:120px;margin:4px 0;display:block;border-radius:2px"/>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#B89B5E;text-decoration:underline">$1</a>')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+  return html
+    .split(/\n\n+/)
+    .map(p => `<p style="margin:0 0 8px 0;line-height:1.6;font-size:0.82rem;color:#C8C2B6">${p.replace(/\n/g, '<br/>')}</p>`)
+    .join('');
+}
 
 interface NewsItem {
   id: number;
@@ -41,6 +53,8 @@ export default function AdminLauncherNews() {
   const [patchVersion, setPatchVersion] = useState('');
   const [patchEntries, setPatchEntries] = useState<{ version: string; file: string }[]>([]);
   const [versionSaving, setVersionSaving] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const bodyRef = useRef<HTMLTextAreaElement | null>(null);
 
   const fetchItems = async () => {
     try {
@@ -253,6 +267,17 @@ export default function AdminLauncherNews() {
             <li>Unpublished items are hidden from the launcher but remain in the database.</li>
             <li><b style={{ color: 'var(--toa-bone)' }}>Sort Order</b> controls display order (lower = first).</li>
           </ul>
+          <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(184,155,94,0.06)', borderRadius: '0.375rem', borderLeft: '2px solid rgba(184,155,94,0.3)' }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--toa-gold)', marginBottom: '0.4rem' }}>Body markup reference (FlowDocument renderer)</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.2rem 1.5rem', fontSize: '0.75rem' }}>
+              {[['**bold text**', 'Bold'], ['*italic text*', 'Italic'], ['[label](https://...)', 'Gold hyperlink'], ['![alt](https://...image)', 'Inline image'], ['blank line between text', 'New paragraph'], ['single newline', 'Line break']].map(([syn, desc]) => (
+                <div key={syn} style={{ display: 'contents' }}>
+                  <span style={{ fontFamily: 'monospace', color: 'var(--toa-gold)' }}>{syn}</span>
+                  <span style={{ color: 'var(--toa-muted)' }}>{desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Form */}
@@ -303,14 +328,65 @@ export default function AdminLauncherNews() {
           </div>
 
           <div>
-            <label className="toa-label-field">Body (plain text, line breaks supported)</label>
-            <textarea
-              value={form.body}
-              onChange={(e) => setForm({ ...form, body: e.target.value })}
-              rows={8}
-              className="toa-textarea"
-              placeholder="Describe the news or patch changes..."
-            />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
+              <label className="toa-label-field" style={{ margin: 0 }}>Body</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                {([
+                  { label: 'B', title: 'Bold (**text**)', before: '**', after: '**', placeholder: 'bold text', icon: <Bold size={11}/> },
+                  { label: 'I', title: 'Italic (*text*)', before: '*', after: '*', placeholder: 'italic text', icon: <Italic size={11}/> },
+                  { label: 'Link', title: 'Hyperlink', before: '[', after: '](https://)', placeholder: 'link text', icon: <Link size={11}/> },
+                  { label: 'Img', title: 'Image', before: '![', after: '](https://)', placeholder: 'alt text', icon: <ImageIcon size={11}/> },
+                ] as { label: string; title: string; before: string; after: string; placeholder: string; icon: React.ReactNode }[]).map((btn) => (
+                  <button
+                    key={btn.label}
+                    type="button"
+                    title={btn.title}
+                    className="toa-btn toa-btn-ghost toa-btn-sm"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                    onClick={() => {
+                      const ta = bodyRef.current;
+                      if (!ta) return;
+                      const start = ta.selectionStart;
+                      const end = ta.selectionEnd;
+                      const selected = ta.value.slice(start, end) || btn.placeholder;
+                      const newVal = ta.value.slice(0, start) + btn.before + selected + btn.after + ta.value.slice(end);
+                      setForm({ ...form, body: newVal });
+                      setTimeout(() => {
+                        ta.focus();
+                        ta.selectionStart = start + btn.before.length;
+                        ta.selectionEnd = start + btn.before.length + selected.length;
+                      }, 0);
+                    }}
+                  >{btn.icon}&nbsp;{btn.label}</button>
+                ))}
+                <button
+                  type="button"
+                  className="toa-btn toa-btn-ghost toa-btn-sm"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', padding: '0.2rem 0.5rem', fontSize: '0.75rem', color: showPreview ? 'var(--toa-gold)' : undefined }}
+                  onClick={() => setShowPreview(p => !p)}
+                ><Eye size={11}/>&nbsp;{showPreview ? 'Edit' : 'Preview'}</button>
+              </div>
+            </div>
+            {showPreview ? (
+              <div
+                style={{
+                  minHeight: '10rem', padding: '0.75rem', borderRadius: '0.375rem',
+                  border: '1px solid rgba(184,155,94,0.15)', background: 'rgba(12,10,18,0.7)',
+                  fontSize: '0.82rem', lineHeight: 1.6, color: 'var(--toa-bone)',
+                }}
+                dangerouslySetInnerHTML={{ __html: markupToHtml(form.body) || '<span style="color:#6B6577">Nothing to preview</span>' }}
+              />
+            ) : (
+              <textarea
+                ref={bodyRef}
+                value={form.body}
+                onChange={(e) => setForm({ ...form, body: e.target.value })}
+                rows={8}
+                className="toa-textarea"
+                placeholder="Describe the news or patch changes..."
+                style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}
+              />
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
