@@ -25,7 +25,6 @@ export async function verifyRecaptchaToken(token: string): Promise<boolean> {
   params.append('secret', secret);
   params.append('response', token);
 
-  console.log(`[recaptcha] Verifying token (length=${token.length}) with secret (length=${secret.length})`);
 
   const res = await fetch('https://www.google.com/recaptcha/api/siteverify', {
     method: 'POST',
@@ -39,7 +38,6 @@ export async function verifyRecaptchaToken(token: string): Promise<boolean> {
   }
 
   const data = await res.json();
-  console.log(`[recaptcha] Google response: success=${data.success}, error-codes=${JSON.stringify(data['error-codes'] || [])}`);
 
   return data.success === true;
 }

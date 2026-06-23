@@ -55,7 +55,7 @@ export async function GET(request: Request) {
       `SELECT 1 AS HasColumn FROM sys.columns WHERE Name = N'IsHidden' AND Object_ID = Object_ID(N'WebAuditLogs')`
     );
     const hasIsHidden = !!hiddenColCheck.recordset?.length;
-    const isSuperAdmin = user.GameMasterType === 1 && user.GameMasterLevel >= 3;
+    const isSuperAdmin = user.GameMasterType === 1 && user.GameMasterLevel >= 4;
     if (hasIsHidden) {
       if (!isSuperAdmin) {
         where.push('(l.IsHidden = 0)');

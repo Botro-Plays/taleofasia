@@ -2,9 +2,20 @@ import type { NextAuthConfig } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { userDB, webDB } from '@/lib/db';
 import { isRecaptchaEnabled, verifyRecaptchaToken } from '@/lib/recaptcha';
+import { rateLimiter } from '@/lib/rate-limit';
 import type { JWT } from 'next-auth/jwt';
 import type { Session } from 'next-auth';
 import NextAuth from 'next-auth';
+
+function getClientIpFromHeaders(headers: Headers): string {
+  const cfIp = headers.get('cf-connecting-ip');
+  if (cfIp) return cfIp.trim();
+  const forwarded = headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  const realIp = headers.get('x-real-ip');
+  if (realIp) return realIp.trim();
+  return 'unknown';
+}
 
 export const authOptions: NextAuthConfig = {
   trustHost: true,
@@ -16,25 +27,29 @@ export const authOptions: NextAuthConfig = {
         password: { label: 'Password', type: 'password' },
         recaptchaToken: { label: 'reCAPTCHA Token', type: 'text' },
       },
-      async authorize(credentials) {
-        console.log('[auth] authorize called with username:', credentials?.username, 'recaptchaToken length:', (credentials?.recaptchaToken as string)?.length || 0);
-
+      async authorize(credentials, request) {
         if (!credentials?.username || !credentials?.password) {
           throw new Error('Username and password are required');
+        }
+
+        const headers = request?.headers instanceof Headers ? request.headers : new Headers();
+        const clientIp = getClientIpFromHeaders(headers);
+
+        // Rate limit login attempts: 10 per IP per 15 minutes
+        const limit = rateLimiter.check(clientIp, 'auth-login', 10, 15 * 60 * 1000);
+        if (!limit.allowed) {
+          throw new Error('Too many login attempts. Please try again later.');
         }
 
         try {
           // Verify reCAPTCHA if enabled
           const captchaOn = await isRecaptchaEnabled();
-          console.log('[auth] reCAPTCHA enabled:', captchaOn);
           if (captchaOn) {
             const token = credentials.recaptchaToken as string | undefined;
-            console.log('[auth] reCAPTCHA token present:', !!token, 'length:', token?.length);
             if (!token) {
               throw new Error('reCAPTCHA verification required');
             }
             const valid = await verifyRecaptchaToken(token);
-            console.log('[auth] reCAPTCHA validation result:', valid);
             if (!valid) {
               throw new Error('reCAPTCHA verification failed');
             }
@@ -85,7 +100,7 @@ export const authOptions: NextAuthConfig = {
             END
           `, { 
             username: credentials.username,
-            ip: '127.0.0.1' // Will be updated with actual IP in production
+            ip: clientIp
           });
 
           // Log the login
@@ -94,7 +109,7 @@ export const authOptions: NextAuthConfig = {
             VALUES (@username, 'LOGIN', 'User logged in successfully', @ip)
           `, {
             username: credentials.username,
-            ip: '127.0.0.1'
+            ip: clientIp
           });
 
           return {
@@ -104,7 +119,6 @@ export const authOptions: NextAuthConfig = {
             coins: user.Coins,
           };
         } catch (error) {
-          console.error('Authorization error:', error);
           throw error;
         }
       },
@@ -137,7 +151,7 @@ export const authOptions: NextAuthConfig = {
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET!,
+  secret: process.env.NEXTAUTH_SECRET || 'dev-only-secret-change-in-production',
 };
 
 export const { handlers, auth } = NextAuth(authOptions);
