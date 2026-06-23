@@ -34,11 +34,11 @@ export default function Home() {
     blessCastle: null,
     surviveOrDie: null,
   });
-  const [_serverStatus, setServerStatus] = useState<ServerStatus>({
+  const [serverStatus, setServerStatus] = useState<ServerStatus>({
     status: 'online',
     onlineUsers: 0,
   });
-  const [_statusLoading, setStatusLoading] = useState(true);
+  const [statusLoading, setStatusLoading] = useState(true);
   const { data: session } = useSession();
   const [stats, setStats] = useState({ yearsLegacy: 0, activePlayers: 0 });
   const [social, setSocial] = useState<{ discord?: string; facebook?: string }>({});
@@ -81,7 +81,7 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
-  const _getClanIconUrl = (iconID: number) => {
+  const getClanIconUrl = (iconID: number) => {
     if (iconID === 0) return 'https://taleofasia.com/ClanImage/999999.bmp';
     if (iconID >= 1 && iconID <= 9) return `https://taleofasia.com/ClanImage/${100000 + iconID}.bmp`;
     if (iconID >= 10 && iconID <= 99) return `https://taleofasia.com/ClanImage/${10000 + iconID}.bmp`;
@@ -103,8 +103,8 @@ export default function Home() {
     { label: 'Active Players', value: `${(stats.activePlayers / 1000).toFixed(1)}K` },
     { label: 'Classes', value: '10' },
     { label: 'to Play', value: 'Free' },
-    { label: 'Bless Castle', value: crownHolders.blessCastle?.clanName || 'Vacant' },
-    { label: 'Bellatra Champion', value: crownHolders.surviveOrDie?.clanName || 'Vacant' },
+    { label: 'Bless Castle', value: crownHolders.blessCastle?.clanName || 'Vacant', icon: crownHolders.blessCastle?.iconID },
+    { label: 'Bellatra Champion', value: crownHolders.surviveOrDie?.clanName || 'Vacant', icon: crownHolders.surviveOrDie?.iconID },
   ];
 
   const features = [
@@ -119,6 +119,42 @@ export default function Home() {
 
       {/* === HERO: Ember particles + decode-in title + command bar === */}
       <section className="toa-hero">
+        {/* Server status badge */}
+        <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', zIndex: 20 }}>
+          {!statusLoading && (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              padding: '0.3rem 0.7rem',
+              borderRadius: '999px',
+              background: 'rgba(8,8,12,0.7)',
+              border: `1px solid ${
+                serverStatus.status === 'online' ? 'rgba(34,197,94,0.4)' :
+                serverStatus.status === 'maintenance' ? 'rgba(251,146,60,0.4)' :
+                'rgba(239,68,68,0.4)'
+              }`,
+              color: serverStatus.status === 'online' ? '#22c55e' :
+                     serverStatus.status === 'maintenance' ? '#fb923c' :
+                     '#ef4444',
+            }}>
+              <span style={{
+                width: '0.5rem',
+                height: '0.5rem',
+                borderRadius: '50%',
+                background: 'currentColor',
+                boxShadow: '0 0 6px currentColor',
+              }} />
+              {serverStatus.status === 'online' ? `Online · ${serverStatus.onlineUsers}` :
+               serverStatus.status === 'maintenance' ? 'Maintenance' : 'Offline'}
+            </span>
+          )}
+        </div>
+
         {/* Ember particles */}
         {embers.map(e => (
           <div

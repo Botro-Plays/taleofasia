@@ -1,5 +1,6 @@
  'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import CookieConsent from '@/app/components/CookieConsent';
@@ -11,7 +12,7 @@ interface GlobalThemeProps {
   showNav?: boolean;
   showFooter?: boolean;
   showTicker?: boolean;
-  tickerItems?: { label: string; value: string }[];
+  tickerItems?: { label: string; value: string; icon?: number }[];
 }
 
 export function GlobalTheme({ children, showNav = true, showFooter = true, showTicker = false, tickerItems = [] }: GlobalThemeProps) {
@@ -48,6 +49,21 @@ export function GlobalTheme({ children, showNav = true, showFooter = true, showT
             {[...tickerItems, ...tickerItems].map((item, idx) => (
               <div key={idx} className="toa-ticker-item">
                 <span className="toa-ticker-dot" />
+                {item.icon !== undefined && item.icon !== 0 && (
+                  <Image
+                    src={`https://taleofasia.com/ClanImage/${
+                      item.icon >= 1 && item.icon <= 9 ? 100000 + item.icon :
+                      item.icon >= 10 && item.icon <= 99 ? 10000 + item.icon :
+                      item.icon >= 100 && item.icon <= 999 ? 1000 + item.icon :
+                      item.icon
+                    }.bmp`}
+                    alt="Clan"
+                    width={16}
+                    height={16}
+                    style={{ borderRadius: '2px', flexShrink: 0 }}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
                 <strong>{item.value}</strong>
                 <span>{item.label}</span>
               </div>
