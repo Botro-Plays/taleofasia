@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import { PageShell } from '@/app/components/PageShell';
-import { Search, RotateCcw, Save, Settings2, X, Plus, Trash2, Columns3 } from 'lucide-react';
+import { Search, RotateCcw, Save, Settings2, X, Columns3 } from 'lucide-react';
 
 type Meta = {
   tables?: string[];

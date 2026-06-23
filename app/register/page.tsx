@@ -7,6 +7,30 @@ import Link from 'next/link';
 import { GlobalTheme } from '@/app/components/GlobalTheme';
 import ReCaptcha, { type ReCaptchaRef } from '@/app/components/ReCaptcha';
 
+function LeftPanel() {
+  return (
+    <div className="toa-auth-left">
+      <div className="toa-auth-left-content">
+        <Image src="/taleofasia-logo-new.png" alt="Tale of Asia" width={160} height={160} className="mx-auto toa-auth-logo" unoptimized />
+        <h1 className="toa-auth-title" style={{ fontSize: '2.5rem', marginTop: '1.5rem' }}>Tale of Asia</h1>
+        <p className="toa-auth-tagline">Priston Tale Game</p>
+        <p className="toa-auth-quote">Every legend begins with a single step onto the battlefield.</p>
+      </div>
+    </div>
+  );
+}
+
+function MobileLogo() {
+  return (
+    <div className="toa-auth-mobile-logo">
+      <Link href="/">
+        <Image src="/taleofasia-logo-new.png" alt="Tale of Asia" width={100} height={100} className="mx-auto toa-auth-logo" unoptimized />
+        <h1 className="toa-auth-title" style={{ fontSize: '1.75rem', marginTop: '0.75rem' }}>Tale of Asia</h1>
+      </Link>
+    </div>
+  );
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -106,26 +130,6 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
-
-  const LeftPanel = () => (
-    <div className="toa-auth-left">
-      <div className="toa-auth-left-content">
-        <Image src="/taleofasia-logo-new.png" alt="Tale of Asia" width={160} height={160} className="mx-auto toa-auth-logo" unoptimized />
-        <h1 className="toa-auth-title" style={{ fontSize: '2.5rem', marginTop: '1.5rem' }}>Tale of Asia</h1>
-        <p className="toa-auth-tagline">Priston Tale Game</p>
-        <p className="toa-auth-quote">Every legend begins with a single step onto the battlefield.</p>
-      </div>
-    </div>
-  );
-
-  const MobileLogo = () => (
-    <div className="toa-auth-mobile-logo">
-      <Link href="/">
-        <Image src="/taleofasia-logo-new.png" alt="Tale of Asia" width={100} height={100} className="mx-auto toa-auth-logo" unoptimized />
-        <h1 className="toa-auth-title" style={{ fontSize: '1.75rem', marginTop: '0.75rem' }}>Tale of Asia</h1>
-      </Link>
-    </div>
-  );
 
   if (success) {
     return (

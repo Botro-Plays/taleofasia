@@ -148,56 +148,7 @@ export default function TopUpPage() {
   const timezoneRef = useRef<string>(Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [pendingTimers, setPendingTimers] = useState<Record<string, number>>({});
   const [paymentBanner, setPaymentBanner] = useState<{ type: 'success' | 'failed'; method?: string } | null>(null);
-
-  // Detect ?payment=success or ?payment=failed from redirect back (PayMongo/PayPal)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const payment = params.get('payment');
-    if (payment === 'success' || payment === 'failed') {
-      const method = params.get('method') || undefined;
-      setPaymentBanner({ type: payment, method });
-      router.replace('/dashboard/topup', { scroll: false });
-      // Reset the flow so stale order/confirm UI doesn't linger after redirect
-      setOrder(null);
-      setSelectedMethod(null);
-      setSelectedUsd(null);
-      setProcessing(false);
-      setError('');
-      setStep('amount');
-      void fetchHistory();
-
-      if (payment === 'success') {
-        // Poll history every 3s until the latest pending transaction completes (or max ~30s)
-        let pollCount = 0;
-        const maxPolls = 10;
-        const pollInterval = setInterval(async () => {
-          pollCount += 1;
-          await fetchHistory();
-          if (pollCount >= maxPolls) {
-            clearInterval(pollInterval);
-            return;
-          }
-          // Check if the most recent PayPal/PayMongo transaction is no longer pending
-          setHistory((prev) => {
-            const recent = prev.find(
-              (tx) => tx.Status === 'pending' && (tx.PaymentMethod === 'PayPal' || tx.PaymentMethod === 'PayMongo')
-            );
-            if (!recent) {
-              clearInterval(pollInterval);
-              setPaymentBanner(null);
-            }
-            return prev;
-          });
-        }, 3000);
-        const t = setTimeout(() => setPaymentBanner(null), 8000);
-        return () => { clearTimeout(t); clearInterval(pollInterval); };
-      } else {
-        const t = setTimeout(() => setPaymentBanner(null), 5000);
-        return () => clearTimeout(t);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const fetchHistoryRef = useRef<() => Promise<void>>(async () => {});
 
   // Keep timezoneRef in sync with location API result without triggering re-renders
   useEffect(() => {
@@ -229,7 +180,7 @@ export default function TopUpPage() {
     }
   }, []);
 
-  const fetchHistory = useCallback(async () => {
+  const fetchHistory = async () => {
     setLoadingHistory(true);
     try {
       const tz = timezoneRef.current;
@@ -256,6 +207,55 @@ export default function TopUpPage() {
     } finally {
       setLoadingHistory(false);
     }
+  };
+  fetchHistoryRef.current = fetchHistory;
+
+  // Detect ?payment=success or ?payment=failed from redirect back (PayMongo/PayPal)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get('payment');
+    if (payment === 'success' || payment === 'failed') {
+      const method = params.get('method') || undefined;
+      queueMicrotask(() => {
+        setPaymentBanner({ type: payment as 'success' | 'failed', method });
+        router.replace('/dashboard/topup', { scroll: false });
+        setOrder(null);
+        setSelectedMethod(null);
+        setSelectedUsd(null);
+        setProcessing(false);
+        setError('');
+        setStep('amount');
+        void fetchHistoryRef.current();
+      });
+
+      if (payment === 'success') {
+        let pollCount = 0;
+        const maxPolls = 10;
+        const pollInterval = setInterval(async () => {
+          pollCount += 1;
+          await fetchHistoryRef.current();
+          if (pollCount >= maxPolls) {
+            clearInterval(pollInterval);
+            return;
+          }
+          setHistory((prev) => {
+            const recent = prev.find(
+              (tx) => tx.Status === 'pending' && (tx.PaymentMethod === 'PayPal' || tx.PaymentMethod === 'PayMongo')
+            );
+            if (!recent) {
+              clearInterval(pollInterval);
+              setPaymentBanner(null);
+            }
+            return prev;
+          });
+        }, 3000);
+        const t = setTimeout(() => setPaymentBanner(null), 8000);
+        return () => { clearTimeout(t); clearInterval(pollInterval); };
+      } else {
+        const t = setTimeout(() => setPaymentBanner(null), 5000);
+        return () => clearTimeout(t);
+      }
+    }
   }, []);
 
 
@@ -270,7 +270,7 @@ export default function TopUpPage() {
       }, 0);
       return () => clearTimeout(id);
     }
-  }, [status, router, fetchConfig, fetchLocation, fetchHistory]);
+  }, [status, router, fetchConfig, fetchLocation]);
 
   useEffect(() => {
     if (!order) return;
@@ -364,8 +364,7 @@ export default function TopUpPage() {
       }
     }, 10000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchHistory]);
+  }, []);
 
   const calcCoins = useCallback(
     (usdAmount: number, paymentMethod?: PaymentMethodKey) => {
@@ -464,7 +463,7 @@ export default function TopUpPage() {
         });
         const data = await res.json();
         if (res.ok && data.checkoutUrl) {
-          window.location.href = data.checkoutUrl;
+          window.location.assign(data.checkoutUrl);
           return;
         } else {
           setError(data?.message || 'Failed to create PayMongo payment.');
@@ -481,7 +480,7 @@ export default function TopUpPage() {
         });
         const data = await res.json();
         if (res.ok && data.approvalUrl) {
-          window.location.href = data.approvalUrl;
+          window.location.assign(data.approvalUrl);
           return;
         } else {
           setError(data?.message || 'Failed to create PayPal order.');
@@ -559,7 +558,7 @@ export default function TopUpPage() {
         // Try to reuse stored checkout URL from Notes first
         const checkoutMatch = tx.Notes?.match(/checkoutUrl:([^|]+)/);
         if (checkoutMatch && checkoutMatch[1].trim()) {
-          window.location.href = checkoutMatch[1].trim();
+          window.location.assign(checkoutMatch[1].trim());
           return;
         }
         // Fallback: generate new link
@@ -570,7 +569,7 @@ export default function TopUpPage() {
         });
         const data = await res.json();
         if (res.ok && data.checkoutUrl) {
-          window.location.href = data.checkoutUrl;
+          window.location.assign(data.checkoutUrl);
         } else {
           setError(data?.message || 'Failed to get PayMongo link.');
         }
@@ -578,7 +577,7 @@ export default function TopUpPage() {
         // Try to reuse stored approval URL from Notes first
         const approvalMatch = tx.Notes?.match(/approvalUrl:([^|]+)/);
         if (approvalMatch && approvalMatch[1].trim()) {
-          window.location.href = approvalMatch[1].trim();
+          window.location.assign(approvalMatch[1].trim());
           return;
         }
         // Fallback: generate new link
@@ -589,7 +588,7 @@ export default function TopUpPage() {
         });
         const data = await res.json();
         if (res.ok && data.approvalUrl) {
-          window.location.href = data.approvalUrl;
+          window.location.assign(data.approvalUrl);
         } else {
           setError(data?.message || 'Failed to get PayPal link.');
         }
@@ -749,8 +748,7 @@ export default function TopUpPage() {
     void fetchHistory();
     resetFlow('amount');
     setError('');
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cryptoTxId, fetchHistory]);
+  }, [cryptoTxId]);
 
   const cryptoInitialTxHash = useMemo(() => {
     if (!cryptoTxId) return undefined;
@@ -783,7 +781,7 @@ export default function TopUpPage() {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [fetchHistory]);
+  }, []);
 
   const refreshHistory = () => {
     void fetchHistory();
@@ -795,8 +793,7 @@ export default function TopUpPage() {
     if (!order?.transactionId || step !== 'confirm') return;
     const matchingTx = history.find((tx) => tx.TransactionID === order.transactionId);
     if (!matchingTx || matchingTx.Status === 'pending') return;
-    resetFlow('amount');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    queueMicrotask(() => resetFlow('amount'));
   }, [history, order?.transactionId, step]);
 
   const formatTime = (seconds: number) => {

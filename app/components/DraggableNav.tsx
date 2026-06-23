@@ -77,7 +77,6 @@ export function DraggableNav({ customPages }: { customPages: Array<{ Slug: strin
   const navRef = useRef<HTMLElement>(null);
   const [position, setPosition] = useState<NavPosition>(DEFAULT_POSITION);
   const [isDragging, setIsDragging] = useState(false);
-  const [hasMoved, setHasMoved] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, navX: 0, navY: 0 });
   const dragMoved = useRef(false);
@@ -149,7 +148,6 @@ export function DraggableNav({ customPages }: { customPages: Array<{ Slug: strin
     if (!navEl) return;
 
     setIsDragging(true);
-    setHasMoved(false);
     dragMoved.current = false;
     dragStart.current = {
       x: e.clientX,
@@ -166,7 +164,6 @@ export function DraggableNav({ customPages }: { customPages: Array<{ Slug: strin
     const dy = e.clientY - dragStart.current.y;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
       dragMoved.current = true;
-      setHasMoved(true);
     }
     if (!dragMoved.current) return;
 
@@ -215,7 +212,6 @@ export function DraggableNav({ customPages }: { customPages: Array<{ Slug: strin
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     if (!isDragging) return;
     setIsDragging(false);
-    setHasMoved(false);
     const navEl = navRef.current;
     if (navEl) {
       try { navEl.releasePointerCapture(e.pointerId); } catch { /* ignore */ }

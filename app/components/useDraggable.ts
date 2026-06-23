@@ -69,6 +69,7 @@ export function useDraggable({
   const dragMoved = useRef(false);
 
   useEffect(() => {
+    const restore = () => {
     try {
       const raw = localStorage.getItem(fullKey);
       if (raw) {
@@ -101,6 +102,8 @@ export function useDraggable({
       setState({ x: (w - elW) / 2, y: h - elH - 120, orientation: 'horizontal', edge: 'bottom' });
     }
     setInitialized(true);
+    };
+    queueMicrotask(restore);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -161,8 +164,8 @@ export function useDraggable({
     const elW = el.offsetWidth;
     const elH = el.offsetHeight;
 
-    let newX = Math.max(8, Math.min(dragStart.current.posX + dx, w - elW - 8));
-    let newY = Math.max(8, Math.min(dragStart.current.posY + dy, h - elH - 8));
+    const newX = Math.max(8, Math.min(dragStart.current.posX + dx, w - elW - 8));
+    const newY = Math.max(8, Math.min(dragStart.current.posY + dy, h - elH - 8));
 
     let next: DraggableState = { ...state, x: newX, y: newY };
 

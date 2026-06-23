@@ -15,7 +15,7 @@ interface GlobalThemeProps {
 }
 
 export function GlobalTheme({ children, showNav = true, showFooter = true, showTicker = false, tickerItems = [] }: GlobalThemeProps) {
-  const { data: session } = useSession();
+  useSession();
   const [customPages, setCustomPages] = useState<Array<{ Slug: string; Title: string }>>([]);
 
   useEffect(() => {
