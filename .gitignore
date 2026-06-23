@@ -41,6 +41,3 @@ session-logs/
 
 # TypeScript build info
 tsconfig.tsbuildinfo
-
-# Launcher server files (served via IIS virtual directory, too large for git)
-launcher-server/
