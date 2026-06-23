@@ -1,0 +1,498 @@
+/* MMORPG Theme - Obsidian & Gold */
+
+:root {
+  /* Primary Colors */
+  --color-obsidian: #0a0e27;
+  --color-charcoal: #1a1f3a;
+  --color-deep-crimson: #8b1a1a;
+  --color-royal-gold: #d4a574;
+  --color-ancient-bronze: #8b6f47;
+  
+  /* Accent Colors */
+  --color-mystical-blue: #4a7c9e;
+  --color-dark-steel: #3a4a5a;
+  --color-glowing-cyan: #00d9ff;
+  --color-crimson-glow: #ff3333;
+  
+  /* Semantic Colors */
+  --color-success: #22c55e;
+  --color-warning: #f97316;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+  
+  /* Glows */
+  --glow-gold: 0 0 20px rgba(212, 165, 116, 0.3);
+  --glow-gold-intense: 0 0 30px rgba(212, 165, 116, 0.6);
+  --glow-crimson: 0 0 20px rgba(255, 51, 51, 0.4);
+  --glow-cyan: 0 0 20px rgba(0, 217, 255, 0.3);
+  --glow-success: 0 0 15px rgba(34, 197, 94, 0.3);
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Base Styles */
+body {
+  background-color: var(--color-obsidian);
+  color: #e2e8f0;
+  font-family: var(--font-sans, 'Crimson Text'), serif;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading, 'Cinzel'), serif;
+  font-weight: 700;
+  color: var(--color-royal-gold);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+h1 {
+  font-size: 3.5rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  font-family: var(--font-heading, 'Cinzel'), serif;
+}
+
+h2 {
+  font-size: 2.25rem;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+/* Links */
+a {
+  color: var(--color-glowing-cyan);
+  transition: all 0.3s ease;
+}
+
+a:hover {
+  color: var(--color-royal-gold);
+  text-shadow: var(--glow-gold);
+}
+
+/* Selection */
+::selection {
+  background-color: var(--color-royal-gold);
+  color: var(--color-obsidian);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-charcoal);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-royal-gold);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ancient-bronze);
+  box-shadow: var(--glow-gold);
+}
+
+/* Animations */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: var(--glow-gold);
+  }
+  50% {
+    box-shadow: var(--glow-gold-intense);
+  }
+}
+
+@keyframes glow-pulse-crimson {
+  0%, 100% {
+    box-shadow: var(--glow-crimson);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 51, 51, 0.6);
+  }
+}
+
+@keyframes glow-pulse-cyan {
+  0%, 100% {
+    box-shadow: var(--glow-cyan);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 217, 255, 0.6);
+  }
+}
+
+@keyframes border-glow {
+  0%, 100% {
+    border-color: var(--color-royal-gold);
+    box-shadow: var(--glow-gold);
+  }
+  50% {
+    border-color: var(--color-ancient-bronze);
+    box-shadow: var(--glow-gold-intense);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Utility Classes */
+.glow-gold {
+  box-shadow: var(--glow-gold);
+  transition: box-shadow 0.3s ease;
+}
+
+.glow-gold:hover {
+  box-shadow: var(--glow-gold-intense);
+}
+
+.glow-gold-pulse {
+  animation: glow-pulse 2s infinite;
+}
+
+.glow-crimson {
+  box-shadow: var(--glow-crimson);
+}
+
+.glow-crimson-pulse {
+  animation: glow-pulse-crimson 2s infinite;
+}
+
+.glow-cyan {
+  box-shadow: var(--glow-cyan);
+}
+
+.glow-cyan-pulse {
+  animation: glow-pulse-cyan 2s infinite;
+}
+
+.border-glow {
+  animation: border-glow 2s infinite;
+}
+
+.fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
+.slide-in-left {
+  animation: slide-in-left 0.6s ease-out;
+}
+
+.slide-in-right {
+  animation: slide-in-right 0.6s ease-out;
+}
+
+.scale-in {
+  animation: scale-in 0.6s ease-out;
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Rune Border */
+.rune-border {
+  border: 2px dashed var(--color-royal-gold);
+  border-radius: 4px;
+  box-shadow: var(--glow-gold);
+  position: relative;
+}
+
+.rune-border::before,
+.rune-border::after {
+  content: '◆';
+  position: absolute;
+  color: var(--color-royal-gold);
+  font-size: 12px;
+}
+
+.rune-border::before {
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.rune-border::after {
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Metallic Card */
+.metallic-card {
+  background: linear-gradient(135deg, var(--color-charcoal) 0%, rgba(26, 31, 58, 0.8) 100%);
+  border: 1px solid var(--color-royal-gold);
+  border-radius: 8px;
+  box-shadow: var(--glow-gold);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.metallic-card:hover {
+  border-color: var(--color-ancient-bronze);
+  box-shadow: var(--glow-gold-intense);
+  transform: translateY(-2px);
+}
+
+/* Conquest Banner */
+.conquest-banner {
+  background: linear-gradient(90deg, var(--color-deep-crimson) 0%, var(--color-charcoal) 50%, var(--color-deep-crimson) 100%);
+  border-left: 4px solid var(--color-crimson-glow);
+  border-right: 4px solid var(--color-crimson-glow);
+  padding: 1.5rem;
+  border-radius: 4px;
+  box-shadow: var(--glow-crimson);
+}
+
+/* Glow Button */
+.glow-button {
+  background: linear-gradient(135deg, var(--color-royal-gold) 0%, var(--color-ancient-bronze) 100%);
+  color: var(--color-obsidian);
+  border: 2px solid var(--color-royal-gold);
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--glow-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.glow-button:hover {
+  box-shadow: var(--glow-gold-intense);
+  transform: scale(1.02);
+}
+
+.glow-button:active {
+  transform: scale(0.98);
+}
+
+.glow-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Crimson Button */
+.crimson-button {
+  background: linear-gradient(135deg, var(--color-deep-crimson) 0%, #6b1515 100%);
+  color: #fff;
+  border: 2px solid var(--color-crimson-glow);
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--glow-crimson);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.crimson-button:hover {
+  box-shadow: 0 0 30px rgba(255, 51, 51, 0.6);
+  transform: scale(1.02);
+}
+
+/* Rarity Badges */
+.rarity-common {
+  border-color: var(--color-dark-steel);
+  box-shadow: 0 0 10px rgba(58, 74, 90, 0.3);
+}
+
+.rarity-uncommon {
+  border-color: var(--color-success);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+}
+
+.rarity-rare {
+  border-color: var(--color-info);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+.rarity-epic {
+  border-color: #a855f7;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+}
+
+.rarity-legendary {
+  border-color: var(--color-royal-gold);
+  box-shadow: var(--glow-gold);
+}
+
+/* Status Badges */
+.status-online {
+  color: var(--color-success);
+  text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.status-offline {
+  color: var(--color-dark-steel);
+}
+
+.status-maintenance {
+  color: var(--color-warning);
+  text-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+}
+
+.status-pvp {
+  color: var(--color-crimson-glow);
+  text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-royal-gold) 0%, var(--color-glowing-cyan) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Tale of Conquest Title - Gold with Light Blue Fill and Copper Border */
+.tale-of-conquest-title {
+  background: linear-gradient(180deg, #d4a574 0%, #d4a574 40%, #4a7c9e 60%, #00d9ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 
+    -2px -2px 0px #8b6f47,
+    2px -2px 0px #8b6f47,
+    -2px 2px 0px #8b6f47,
+    2px 2px 0px #8b6f47,
+    -3px 0px 0px #6b5d47,
+    3px 0px 0px #6b5d47,
+    0px -3px 0px #6b5d47,
+    0px 3px 0px #6b5d47,
+    0 0 15px rgba(212, 165, 116, 1),
+    0 0 30px rgba(212, 165, 116, 0.8),
+    0 0 45px rgba(139, 111, 71, 0.6),
+    0 0 60px rgba(74, 124, 158, 0.5),
+    0 0 80px rgba(0, 217, 255, 0.3),
+    inset 0 0 20px rgba(212, 165, 116, 0.4);
+  filter: 
+    drop-shadow(0px 0px 20px rgba(212, 165, 116, 0.8))
+    drop-shadow(0px 0px 40px rgba(74, 124, 158, 0.6))
+    drop-shadow(0px 0px 60px rgba(0, 217, 255, 0.4));
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    text-shadow: 
+      -2px -2px 0px #8b6f47,
+      2px -2px 0px #8b6f47,
+      -2px 2px 0px #8b6f47,
+      2px 2px 0px #8b6f47,
+      -3px 0px 0px #6b5d47,
+      3px 0px 0px #6b5d47,
+      0px -3px 0px #6b5d47,
+      0px 3px 0px #6b5d47,
+      0 0 15px rgba(212, 165, 116, 1),
+      0 0 30px rgba(212, 165, 116, 0.8),
+      0 0 45px rgba(139, 111, 71, 0.6),
+      0 0 60px rgba(74, 124, 158, 0.5),
+      0 0 80px rgba(0, 217, 255, 0.3);
+  }
+  50% {
+    text-shadow: 
+      -2px -2px 0px #8b6f47,
+      2px -2px 0px #8b6f47,
+      -2px 2px 0px #8b6f47,
+      2px 2px 0px #8b6f47,
+      -3px 0px 0px #6b5d47,
+      3px 0px 0px #6b5d47,
+      0px -3px 0px #6b5d47,
+      0px 3px 0px #6b5d47,
+      0 0 25px rgba(212, 165, 116, 1),
+      0 0 50px rgba(212, 165, 116, 0.9),
+      0 0 75px rgba(139, 111, 71, 0.7),
+      0 0 100px rgba(74, 124, 158, 0.6),
+      0 0 120px rgba(0, 217, 255, 0.5);
+  }
+}
+
+/* Overlay */
+.dark-overlay {
+  background: linear-gradient(180deg, rgba(10, 14, 39, 0) 0%, rgba(10, 14, 39, 0.7) 100%);
+}
+
+/* Divider */
+.divider-gold {
+  border-top: 2px solid var(--color-royal-gold);
+  box-shadow: 0 0 10px rgba(212, 165, 116, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2.25rem;
+  }
+  
+  h2 {
+    font-size: 1.875rem;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+  }
+}

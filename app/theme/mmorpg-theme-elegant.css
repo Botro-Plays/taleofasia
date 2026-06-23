@@ -1,0 +1,316 @@
+﻿/* MMORPG Theme - Royal & Elegant */
+
+:root {
+  /* Primary Colors - tuned to logo */
+  --color-obsidian: #0A0D12; /* Near-black backdrop */
+  --color-charcoal: #1A232D; /* Slate-navy stone */
+  --color-deep-crimson: #31135E; /* Royal Purple (kept) */
+  --color-royal-gold: #E0B24D; /* Mid gold from logo text */
+  --color-ancient-bronze: #A8742A; /* Deep shadowed gold */
+  
+  /* Accent Colors - sapphire blue and slate steel */
+  --color-mystical-blue: #4DB7FF; /* Sapphire highlight */
+  --color-dark-steel: #2E3944;    /* Shield stone */
+  --color-glowing-cyan: #7ED3FF;  /* Soft glow variant */
+  --color-crimson-glow: #7C3AED;  /* Royal violet (kept) */
+  
+  /* Semantic Colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+  
+  /* Refined, Subdued Glows (Clean & Majestic) */
+  --glow-gold: 0 4px 14px rgba(229, 185, 66, 0.15);
+  --glow-gold-intense: 0 4px 20px rgba(229, 185, 66, 0.3);
+  --glow-crimson: 0 4px 14px rgba(124, 58, 237, 0.2);
+  --glow-cyan: 0 4px 14px rgba(96, 165, 250, 0.2);
+  --glow-success: 0 4px 14px rgba(16, 185, 129, 0.2);
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Base Styles */
+body {
+  background-color: var(--color-obsidian);
+  color: #F3F4F6;
+  font-family: var(--font-sans, 'Crimson Text'), serif;
+  background-image: radial-gradient(circle at 50% 0%, #0F172A 0%, #050814 80%);
+  background-attachment: fixed;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading, 'Cinzel'), serif;
+  font-weight: 700;
+  color: var(--color-royal-gold);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+h1 {
+  font-size: 3.5rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+h2 {
+  font-size: 2.25rem;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+/* Links */
+a {
+  color: var(--color-glowing-cyan);
+  transition: all 0.3s ease;
+}
+
+a:hover {
+  color: var(--color-royal-gold);
+  text-shadow: 0 0 8px rgba(229, 185, 66, 0.4);
+}
+
+/* Selection */
+::selection {
+  background-color: var(--color-royal-gold);
+  color: var(--color-obsidian);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-charcoal);
+  border-left: 1px solid var(--color-dark-steel);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-ancient-bronze);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-royal-gold);
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Utility Classes */
+.glow-gold {
+  box-shadow: var(--glow-gold);
+  transition: box-shadow 0.3s ease;
+}
+
+.glow-gold:hover {
+  box-shadow: var(--glow-gold-intense);
+}
+
+.glow-crimson {
+  box-shadow: var(--glow-crimson);
+}
+
+.glow-cyan {
+  box-shadow: var(--glow-cyan);
+}
+
+.fade-in { animation: fade-in 0.6s ease-out forwards; }
+.slide-in-left { animation: slide-in-left 0.6s ease-out forwards; }
+.slide-in-right { animation: slide-in-right 0.6s ease-out forwards; }
+.scale-in { animation: scale-in 0.6s ease-out forwards; }
+.float { animation: float 4s ease-in-out infinite; }
+
+/* Metallic Card (Now Royal Card) */
+.metallic-card {
+  background: linear-gradient(180deg, #2E3944 0%, #0A0D12 100%);
+  border: 1px solid rgba(224, 178, 77, 0.40);
+  border-top: 1px solid rgba(229, 185, 66, 0.8);
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
+}
+
+.metallic-card:hover {
+  border-color: var(--color-royal-gold);
+  box-shadow: var(--glow-gold-intense), 0 8px 32px rgba(0, 0, 0, 0.6);
+  transform: translateY(-2px);
+}
+
+/* Conquest Banner */
+.conquest-banner {
+  background: linear-gradient(90deg, #25323C 0%, #1A232D 50%, #25323C 100%);
+  border-left: 2px solid var(--color-royal-gold);
+  border-right: 2px solid var(--color-royal-gold);
+  border-top: 1px solid rgba(229, 185, 66, 0.3);
+  border-bottom: 1px solid rgba(229, 185, 66, 0.3);
+  padding: 1.5rem;
+  border-radius: 2px;
+  box-shadow: var(--glow-gold);
+}
+
+/* Glow Button (Primary) */
+.glow-button {
+  background: linear-gradient(180deg, #F6D37A 0%, #E0B24D 100%);
+  color: #050814;
+  border: 1px solid #F6D37A;
+  border-radius: 4px;
+  padding: 0.75rem 2rem;
+  font-family: var(--font-heading, 'Cinzel'), serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(224, 178, 77, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.glow-button:hover {
+  background: linear-gradient(180deg, #E5B942 0%, #D4A03A 100%);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 20px rgba(229, 185, 66, 0.5);
+  transform: translateY(-1px);
+}
+
+.glow-button:active {
+  transform: translateY(1px);
+}
+
+.glow-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Crimson Button (Secondary/Royal) */
+.crimson-button {
+  background: linear-gradient(180deg, #1E293B 0%, #0F172A 100%);
+  color: var(--color-royal-gold);
+  border: 1px solid var(--color-royal-gold);
+  border-radius: 4px;
+  padding: 0.75rem 2rem;
+  font-family: var(--font-heading, 'Cinzel'), serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.crimson-button:hover {
+  background: linear-gradient(180deg, #334155 0%, #1E293B 100%);
+  box-shadow: var(--glow-gold);
+  transform: translateY(-1px);
+}
+
+/* Rarity Badges */
+.rarity-common { border-color: var(--color-dark-steel); }
+.rarity-uncommon { border-color: var(--color-success); }
+.rarity-rare { border-color: var(--color-info); }
+.rarity-epic { border-color: var(--color-crimson-glow); }
+.rarity-legendary { border-color: var(--color-royal-gold); }
+
+/* Status Badges */
+.status-online { color: var(--color-success); }
+.status-offline { color: var(--color-dark-steel); }
+.status-maintenance { color: var(--color-warning); }
+.status-pvp { color: var(--color-crimson-glow); }
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(180deg, #F6D37A 0%, #E0B24D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Tale of Conquest Title - Clean, Majestic Royal Gold */
+.tale-of-conquest-title {
+  color: var(--color-royal-gold);
+  position: relative;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: currentColor;
+  background-clip: text;
+  -webkit-text-stroke: 0.6px rgba(46, 57, 68, 0.55);
+  font-family: var(--font-heading, 'Cinzel'), serif;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 0 1px rgba(46, 57, 68, 0.55), 0 0 6px rgba(224, 178, 77, 0.14);
+  filter: none;
+}
+
+/* Overlay */
+.dark-overlay {
+  background: linear-gradient(180deg, rgba(5, 8, 20, 0) 0%, rgba(5, 8, 20, 0.9) 100%);
+}
+
+/* Divider */
+.divider-gold {
+  border-top: 1px solid rgba(229, 185, 66, 0.4);
+  margin: 1rem 0;
+}
+
+/* Logo Pulse - Dramatic expanding loop */
+@keyframes logoPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 12px rgba(212, 165, 116, 0.35));
+  }
+  50% {
+    transform: scale(1.3);
+    filter: drop-shadow(0 0 32px rgba(212, 165, 116, 0.75)) drop-shadow(0 0 70px rgba(212, 165, 116, 0.35));
+  }
+}
+
+.logo-pulse {
+  animation: logoPulse 3.5s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  h1 { font-size: 2.25rem; }
+  h2 { font-size: 1.875rem; }
+  h3 { font-size: 1.5rem; }
+}
+
+
+
+
+
+

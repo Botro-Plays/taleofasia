@@ -1,0 +1,9 @@
+<svg version="1.2" baseProfile="tiny-ps" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <title>Tale of Conquest</title>
+  <path d="M100 12 C140 12 176 28 188 48 C188 110 152 164 100 188 C48 164 12 110 12 48 C24 28 60 12 100 12 Z" fill="#1a1510" stroke="#d4af37" stroke-width="4"/>
+  <path d="M100 36 L100 142" stroke="#e8d48b" stroke-width="10" stroke-linecap="round"/>
+  <path d="M62 108 L138 108" stroke="#d4af37" stroke-width="10" stroke-linecap="round"/>
+  <rect x="94" y="112" width="12" height="34" rx="3" fill="#5c3a1e"/>
+  <circle cx="100" cy="152" r="7" fill="#d4af37"/>
+  <circle cx="100" cy="90" r="5" fill="#c41e3a"/>
+</svg>
