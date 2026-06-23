@@ -105,31 +105,44 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
 }
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://taleofasia.com';
-const logoUrl = `${baseUrl}/images/toa-logo.png`;
+const logoUrl = `${baseUrl}/taleofasia-logo-new.png`;
 
 function emailTemplate(title: string, bodyHtml: string, footerNote: string): string {
   return `
-    <div style="background: #08080C; padding: 24px 16px; font-family: 'Segoe UI', Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: linear-gradient(145deg, #141219, #0C0A10); border: 1px solid rgba(184,155,94,0.22); overflow: hidden;">
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        a { color: #B89B5E !important; text-decoration: none !important; }
+        a:hover { color: #D4B97A !important; }
+      </style>
+    </head>
+    <body style="margin:0;padding:0;background:#08080C;font-family:'Segoe UI',Arial,sans-serif;">
+    <div style="background:#08080C;padding:24px 16px;">
+      <div style="max-width:600px;margin:0 auto;background:#0C0A10;border:1px solid rgba(184,155,94,0.22);overflow:hidden;">
 
-        <div style="background: linear-gradient(135deg, #141219 0%, #0A0810 100%); padding: 40px 32px 32px; text-align: center; border-bottom: 1px solid rgba(184,155,94,0.25);">
-          <img src="${logoUrl}" alt="Tale of Asia" style="max-width: 100px; height: auto; display: block; margin: 0 auto 20px;" />
-          <div style="width: 40px; height: 1px; background: rgba(184,155,94,0.4); margin: 0 auto 16px;"></div>
-          <h1 style="color: #D4B97A; font-family: Georgia, 'Times New Roman', serif; font-size: 18px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; margin: 0;">${title}</h1>
-          <div style="width: 40px; height: 1px; background: rgba(184,155,94,0.4); margin: 16px auto 0;"></div>
+        <div style="background:#0A0810;padding:40px 32px 32px;text-align:center;border-bottom:1px solid rgba(184,155,94,0.25);">
+          <img src="${logoUrl}" alt="Tale of Asia" style="max-width:100px;height:auto;display:block;margin:0 auto 20px;" />
+          <div style="width:40px;height:1px;background:rgba(184,155,94,0.4);margin:0 auto 16px;"></div>
+          <h1 style="color:#D4B97A;font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:700;letter-spacing:4px;text-transform:uppercase;margin:0;">${title}</h1>
+          <div style="width:40px;height:1px;background:rgba(184,155,94,0.4);margin:16px auto 0;"></div>
         </div>
 
-        <div style="padding: 36px 32px; color: #C8C2B6; font-size: 15px; line-height: 1.75;">
+        <div style="padding:36px 32px;color:#C8C2B6;font-size:15px;line-height:1.75;">
           ${bodyHtml}
         </div>
 
-        <div style="padding: 20px 32px; background: rgba(8,8,12,0.8); border-top: 1px solid rgba(184,155,94,0.1); text-align: center;">
-          <p style="margin: 0 0 6px; font-size: 12px; color: #9B95A9;">${footerNote}</p>
-          <p style="margin: 0; font-size: 12px; color: #9B95A9;">Tale of Asia &mdash; <a href="${baseUrl}" style="color: #B89B5E; text-decoration: none;">${baseUrl.replace(/^https?:\/\//, '')}</a></p>
+        <div style="padding:20px 32px;background:#08080C;border-top:1px solid rgba(184,155,94,0.1);text-align:center;">
+          <p style="margin:0 0 6px;font-size:12px;color:#9B95A9;">${footerNote}</p>
+          <p style="margin:0;font-size:12px;color:#9B95A9;">Tale of Asia &mdash; <a href="${baseUrl}" style="color:#B89B5E;text-decoration:none;">${baseUrl.replace(/^https?:\/\//, '')}</a></p>
         </div>
 
       </div>
     </div>
+    </body>
+    </html>
   `;
 }
 
@@ -149,7 +162,7 @@ export async function sendPasswordResetEmail(
           <a href="${resetUrl}" style="display: inline-block; padding: 13px 36px; background: linear-gradient(135deg, #B89B5E 0%, #8B7340 100%); color: #08080C; text-decoration: none; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 2.5px; font-family: Georgia, serif;">Reset Password</a>
         </div>
         <p style="margin: 0 0 8px; font-size: 13px; color: #9B95A9;">Or copy this link into your browser:</p>
-        <p style="margin: 0; word-break: break-all; font-size: 12px; color: #B89B5E;">${resetUrl}</p>
+        <p style="margin: 0; word-break: break-all; font-size: 12px;"><a href="${resetUrl}" style="color: #B89B5E; text-decoration: none;">${resetUrl}</a></p>
       `,
       'This link will expire in 1 hour. If you did not request a password reset, you can safely ignore this email.'
     ),
@@ -173,7 +186,7 @@ export async function sendVerificationEmail(
           <a href="${verifyUrl}" style="display: inline-block; padding: 13px 36px; background: linear-gradient(135deg, #B89B5E 0%, #8B7340 100%); color: #08080C; text-decoration: none; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 2.5px; font-family: Georgia, serif;">Verify Email</a>
         </div>
         <p style="margin: 0 0 8px; font-size: 13px; color: #9B95A9;">Or copy this link into your browser:</p>
-        <p style="margin: 0; word-break: break-all; font-size: 12px; color: #B89B5E;">${verifyUrl}</p>
+        <p style="margin: 0; word-break: break-all; font-size: 12px;"><a href="${verifyUrl}" style="color: #B89B5E; text-decoration: none;">${verifyUrl}</a></p>
       `,
       'This link will expire in 24 hours. If you did not create an account, you can safely ignore this email.'
     ),

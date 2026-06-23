@@ -125,20 +125,33 @@ export async function dispatchPaypalAlert(options: PaypalAlertOptions): Promise<
     : '';
   const severityColor = severity === 'critical' ? '#B33A3A' : severity === 'warning' ? '#C77A30' : '#B89B5E';
   const html = `
-    <div style="background: #08080C; padding: 20px 16px; font-family: 'Segoe UI', Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 0 auto; background: linear-gradient(145deg, #141219, #0C0A10); border: 1px solid rgba(184,155,94,0.22); overflow: hidden;">
-        <div style="background: linear-gradient(135deg, #141219 0%, #0A0810 100%); padding: 20px 24px; border-bottom: 1px solid rgba(184,155,94,0.25); display: flex; align-items: center; justify-content: space-between;">
-          <span style="font-family: Georgia, serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #B89B5E;">Tale of Asia</span>
-          <span style="background: ${severityColor}22; border: 1px solid ${severityColor}66; color: ${severityColor}; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 3px 10px;">${severity}</span>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        a { color: #B89B5E !important; text-decoration: none !important; }
+        a:hover { color: #D4B97A !important; }
+      </style>
+    </head>
+    <body style="margin:0;padding:0;background:#08080C;font-family:'Segoe UI',Arial,sans-serif;">
+    <div style="background:#08080C;padding:20px 16px;">
+      <div style="max-width:600px;margin:0 auto;background:#0C0A10;border:1px solid rgba(184,155,94,0.22);overflow:hidden;">
+        <div style="background:#0A0810;padding:20px 24px;border-bottom:1px solid rgba(184,155,94,0.25);">
+          <span style="font-family:Georgia,serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#B89B5E;">Tale of Asia</span>
+          <span style="background:${severityColor}22;border:1px solid ${severityColor}66;color:${severityColor};font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:3px 10px;float:right;">${severity}</span>
         </div>
-        <div style="padding: 28px 24px; color: #C8C2B6; font-size: 14px; line-height: 1.7;">
-          <h2 style="margin: 0 0 16px; color: #D4B97A; font-family: Georgia, serif; font-size: 16px; font-weight: 700; letter-spacing: 1px;">${title}</h2>
-          <p style="margin: 0 0 16px;">${message}</p>
+        <div style="padding:28px 24px;color:#C8C2B6;font-size:14px;line-height:1.7;">
+          <h2 style="margin:0 0 16px;color:#D4B97A;font-family:Georgia,serif;font-size:16px;font-weight:700;letter-spacing:1px;">${title}</h2>
+          <p style="margin:0 0 16px;">${message}</p>
           ${contextBlock}
-          <p style="margin-top: 24px; font-size: 11px; color: #9B95A9; border-top: 1px solid rgba(184,155,94,0.1); padding-top: 16px;">Automated alert — PayPal guardrail</p>
+          <p style="margin-top:24px;font-size:11px;color:#9B95A9;border-top:1px solid rgba(184,155,94,0.1);padding-top:16px;">Automated alert &mdash; PayPal guardrail</p>
         </div>
       </div>
     </div>
+    </body>
+    </html>
   `;
   const textParts = [
     `${title} (${severity.toUpperCase()})`,
