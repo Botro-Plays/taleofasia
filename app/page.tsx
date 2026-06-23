@@ -80,7 +80,7 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
-  const getClanIconUrl = (iconID: number) => {
+  const _getClanIconUrl = (iconID: number) => {
     if (iconID === 0) return 'https://taleofasia.com/ClanImage/999999.bmp';
     if (iconID >= 1 && iconID <= 9) return `https://taleofasia.com/ClanImage/${100000 + iconID}.bmp`;
     if (iconID >= 10 && iconID <= 99) return `https://taleofasia.com/ClanImage/${10000 + iconID}.bmp`;

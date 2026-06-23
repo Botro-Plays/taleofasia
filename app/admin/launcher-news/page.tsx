@@ -42,6 +42,25 @@ export default function AdminLauncherNews() {
   const [patchEntries, setPatchEntries] = useState<{ version: string; file: string }[]>([]);
   const [versionSaving, setVersionSaving] = useState(false);
 
+  const fetchItems = async () => {
+    try {
+      const res = await fetch('/api/admin/launcher-news');
+      const j = await res.json();
+      if (res.ok && Array.isArray(j.items)) setItems(j.items);
+    } catch {}
+  };
+
+  const fetchVersion = async () => {
+    try {
+      const res = await fetch('/api/admin/launcher-version');
+      const j = await res.json();
+      if (res.ok) {
+        setPatchVersion(j.version || '');
+        setPatchEntries(j.entries || []);
+      }
+    } catch {}
+  };
+
   const init = useCallback(async () => {
     try {
       const chk = await fetch('/api/admin/check');
@@ -55,14 +74,6 @@ export default function AdminLauncherNews() {
       router.push('/dashboard');
     }
   }, [router]);
-
-  const fetchItems = async () => {
-    try {
-      const res = await fetch('/api/admin/launcher-news');
-      const j = await res.json();
-      if (res.ok && Array.isArray(j.items)) setItems(j.items);
-    } catch {}
-  };
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login');
@@ -118,17 +129,6 @@ export default function AdminLauncherNews() {
     } catch (e: any) {
       setError(e?.message || 'Failed to delete');
     }
-  };
-
-  const fetchVersion = async () => {
-    try {
-      const res = await fetch('/api/admin/launcher-version');
-      const j = await res.json();
-      if (res.ok) {
-        setPatchVersion(j.version || '');
-        setPatchEntries(j.entries || []);
-      }
-    } catch {}
   };
 
   const onSaveVersion = async () => {
