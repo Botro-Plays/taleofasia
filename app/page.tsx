@@ -34,11 +34,11 @@ export default function Home() {
     blessCastle: null,
     surviveOrDie: null,
   });
-  const [serverStatus, setServerStatus] = useState<ServerStatus>({
+  const [_serverStatus, setServerStatus] = useState<ServerStatus>({
     status: 'online',
     onlineUsers: 0,
   });
-  const [statusLoading, setStatusLoading] = useState(true);
+  const [_statusLoading, setStatusLoading] = useState(true);
   const { data: session } = useSession();
   const [stats, setStats] = useState({ yearsLegacy: 0, activePlayers: 0 });
   const [social, setSocial] = useState<{ discord?: string; facebook?: string }>({});
@@ -81,7 +81,7 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
 
-  const getClanIconUrl = (iconID: number) => {
+  const _getClanIconUrl = (iconID: number) => {
     if (iconID === 0) return 'https://taleofasia.com/ClanImage/999999.bmp';
     if (iconID >= 1 && iconID <= 9) return `https://taleofasia.com/ClanImage/${100000 + iconID}.bmp`;
     if (iconID >= 10 && iconID <= 99) return `https://taleofasia.com/ClanImage/${10000 + iconID}.bmp`;

@@ -201,7 +201,7 @@ export function useDraggable({
 
     setState(next);
     saveState(next);
-  }, [isDragging, threshold, fullKey, autoOrient, state, saveState]);
+  }, [isDragging, threshold, autoOrient, state, saveState]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     if (!isDragging) return;

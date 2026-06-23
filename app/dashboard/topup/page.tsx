@@ -208,7 +208,10 @@ export default function TopUpPage() {
       setLoadingHistory(false);
     }
   };
-  fetchHistoryRef.current = fetchHistory;
+
+  useEffect(() => {
+    fetchHistoryRef.current = fetchHistory;
+  });
 
   // Detect ?payment=success or ?payment=failed from redirect back (PayMongo/PayPal)
   useEffect(() => {
@@ -256,7 +259,7 @@ export default function TopUpPage() {
         return () => clearTimeout(t);
       }
     }
-  }, []);
+  }, [router]);
 
 
   useEffect(() => {
