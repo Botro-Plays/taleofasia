@@ -12,7 +12,7 @@ interface GlobalThemeProps {
   showNav?: boolean;
   showFooter?: boolean;
   showTicker?: boolean;
-  tickerItems?: { label: string; value: string; icon?: number }[];
+  tickerItems?: { label: string; value: string; icon?: number; statusColor?: string }[];
 }
 
 export function GlobalTheme({ children, showNav = true, showFooter = true, showTicker = false, tickerItems = [] }: GlobalThemeProps) {
@@ -48,7 +48,22 @@ export function GlobalTheme({ children, showNav = true, showFooter = true, showT
           <div className="toa-ticker-track">
             {[...tickerItems, ...tickerItems].map((item, idx) => (
               <div key={idx} className="toa-ticker-item">
-                <span className="toa-ticker-dot" />
+                {item.statusColor ? (
+                  <span style={{
+                    width: '0.5rem',
+                    height: '0.5rem',
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    background: item.statusColor === 'online' ? '#22c55e' :
+                               item.statusColor === 'maintenance' ? '#fb923c' : '#ef4444',
+                    boxShadow: `0 0 6px ${
+                      item.statusColor === 'online' ? '#22c55e' :
+                      item.statusColor === 'maintenance' ? '#fb923c' : '#ef4444'
+                    }`,
+                  }} />
+                ) : (
+                  <span className="toa-ticker-dot" />
+                )}
                 {item.icon !== undefined && item.icon !== 0 && (
                   <Image
                     src={`https://taleofasia.com/ClanImage/${
