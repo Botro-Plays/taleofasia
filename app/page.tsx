@@ -99,7 +99,7 @@ export default function Home() {
 
   const tickerItems = [
     { label: 'Years Legacy', value: `${new Date().getFullYear() - 2026}+` },
-    { label: 'Active Players', value: `${(stats.activePlayers / 1000).toFixed(1)}K` },
+    { label: 'Active Players', value: stats.activePlayers >= 1000 ? `${(stats.activePlayers / 1000).toFixed(1)}K` : `${stats.activePlayers}` },
     { label: 'Classes', value: '10' },
     { label: 'to Play', value: 'Free' },
     {
