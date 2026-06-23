@@ -27,6 +27,8 @@ const eslintConfig = defineConfig([
     rules: {
       // Allow pragmatic use of any in DB helpers and API surfaces
       "@typescript-eslint/no-explicit-any": "off",
+      // Ignore underscore-prefixed variables that are intentionally unused
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", destructuredArrayIgnorePattern: "^_" }],
       // Permit calling const fns inside effects without reordering code
       "no-use-before-define": "off",
       "@typescript-eslint/no-use-before-define": "off",
