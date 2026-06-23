@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { GlobalTheme } from '@/app/components/GlobalTheme';
 import {
   Settings2, Gamepad2, Users, CreditCard, DollarSign,
-  Timer, ScrollText, BarChart2, FileText, Zap,
+  Timer, ScrollText, BarChart2, FileText, Zap, Newspaper,
   ChevronLeft, AlertTriangle, CheckCircle, WifiOff, Clock,
   XCircle, TrendingUp, ShieldAlert,
 } from 'lucide-react';
@@ -130,6 +130,7 @@ export default function AdminDashboardPage() {
     { Icon: ScrollText, title: 'Audit Logs',         description: 'System logs and user activity',        href: '/admin/logs',           accent: 'var(--toa-info)' },
     { Icon: BarChart2,  title: 'Game Logs',          description: 'Read-only search across LogDB',        href: '/admin/game-logs',      accent: 'var(--toa-muted)' },
     { Icon: FileText,   title: 'Pages (CMS)',        description: 'Edit public info and download pages',  href: '/admin/pages',          accent: 'var(--toa-gold)' },
+    { Icon: Newspaper,  title: 'Launcher News',      description: 'News & patch notes shown in launcher',  href: '/admin/launcher-news',  accent: 'var(--toa-warning)' },
     { Icon: Zap,        title: 'Event Management',   description: 'Create and manage in-game events',     href: '/admin/events',         accent: 'var(--toa-ember)' },
   ];
 
