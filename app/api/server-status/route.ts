@@ -10,7 +10,7 @@ let lastStatus: { data: StatusData; ts: number } | null = null;
 const TTL_MS = 3_000; // 3s cache TTL
 
 const MAINTENANCE_FILE = path.join(process.cwd(), 'maintenance.php');
-const LOGIN_SERVER_IP = '92.42.47.104';
+const LOGIN_SERVER_IP = '193.23.160.60';
 const LOGIN_SERVER_PORT = 10010;
 
 function checkMaintenanceMode(): boolean {

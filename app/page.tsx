@@ -104,7 +104,7 @@ export default function Home() {
     { label: 'to Play', value: 'Free' },
     {
       label: 'Server',
-      value: serverStatus.status === 'online' ? `${serverStatus.onlineUsers} ${serverStatus.onlineUsers === 1 ? 'user' : 'users'}` :
+      value: serverStatus.status === 'online' ? `${serverStatus.onlineUsers} ${serverStatus.onlineUsers <= 1 ? 'user' : 'users'}` :
              serverStatus.status === 'maintenance' ? 'Maintenance' : 'Offline',
       statusColor: serverStatus.status,
     },

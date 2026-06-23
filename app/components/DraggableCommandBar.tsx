@@ -95,7 +95,7 @@ export function DraggableCommandBar() {
               <div className={`toa-status-dot ${serverStatus.status}`} />
               <span>{serverStatus.status.toUpperCase()}</span>
               <span className="toa-command-sep">|</span>
-              <span>{serverStatus.onlineUsers.toLocaleString()} {serverStatus.onlineUsers === 1 ? 'user' : 'users'}</span>
+              <span>{serverStatus.onlineUsers.toLocaleString()} {serverStatus.onlineUsers <= 1 ? 'user' : 'users'}</span>
             </>
           )}
         </div>
