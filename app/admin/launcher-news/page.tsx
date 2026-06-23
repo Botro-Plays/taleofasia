@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { PageShell } from '@/app/components/PageShell';
-import { Save, Plus, Trash2, Edit3, X, Eye, EyeOff } from 'lucide-react';
+import { Save, Plus, Trash2, Edit3, X, Eye, EyeOff, Upload } from 'lucide-react';
 
 interface NewsItem {
   id: number;
@@ -38,6 +38,9 @@ export default function AdminLauncherNews() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [patchVersion, setPatchVersion] = useState('');
+  const [patchEntries, setPatchEntries] = useState<{ version: string; file: string }[]>([]);
+  const [versionSaving, setVersionSaving] = useState(false);
 
   const init = useCallback(async () => {
     try {
@@ -47,6 +50,7 @@ export default function AdminLauncherNews() {
       setIsSuperAdmin(!!data.isSuperAdmin);
       setLoading(false);
       await fetchItems();
+      await fetchVersion();
     } catch {
       router.push('/dashboard');
     }
@@ -116,6 +120,36 @@ export default function AdminLauncherNews() {
     }
   };
 
+  const fetchVersion = async () => {
+    try {
+      const res = await fetch('/api/admin/launcher-version');
+      const j = await res.json();
+      if (res.ok) {
+        setPatchVersion(j.version || '');
+        setPatchEntries(j.entries || []);
+      }
+    } catch {}
+  };
+
+  const onSaveVersion = async () => {
+    setVersionSaving(true); setError(''); setInfo('');
+    try {
+      const res = await fetch('/api/admin/launcher-version', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ version: patchVersion, entries: patchEntries }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j?.error || 'Failed');
+      setInfo('Patch version updated');
+      await fetchVersion();
+    } catch (e: any) {
+      setError(e?.message || 'Failed to save version');
+    } finally {
+      setVersionSaving(false);
+    }
+  };
+
   const onCancel = () => {
     setForm(emptyForm);
     setEditing(false);
@@ -143,6 +177,70 @@ export default function AdminLauncherNews() {
   return (
     <PageShell label="Admin" title="Launcher News" backHref="/admin" backLabel="Admin">
       <div style={{ maxWidth: '64rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+        {/* Patch Version Manager */}
+        <div className="toa-panel" style={{ padding: '1.5rem' }}>
+          <div style={{ fontFamily: 'var(--toa-font-display)', fontWeight: 700, fontSize: '0.85rem', color: 'var(--toa-gold-bright)', marginBottom: '0.75rem' }}>
+            Launcher Patch Version
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+            <div>
+              <label className="toa-label-field">Current Version</label>
+              <input
+                value={patchVersion}
+                onChange={(e) => setPatchVersion(e.target.value)}
+                placeholder="e.g. 1.0.0.0"
+                className="toa-input"
+                style={{ width: '12rem' }}
+              />
+            </div>
+            <button
+              onClick={onSaveVersion}
+              disabled={versionSaving || !patchVersion.trim()}
+              className="toa-btn toa-btn-solid toa-btn-sm"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', opacity: (versionSaving || !patchVersion.trim()) ? 0.6 : 1 }}
+            >
+              {versionSaving ? 'Saving...' : <><Upload size={13} />&nbsp;Update Version</>}
+            </button>
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--toa-muted)', marginBottom: '0.5rem' }}>
+            Update entries in <span style={{ fontFamily: 'monospace', color: 'var(--toa-gold)' }}>updateContents.xml</span>:
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {patchEntries.map((entry, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input
+                  value={entry.version}
+                  onChange={(e) => setPatchEntries(patchEntries.map((p, j) => j === i ? { ...p, version: e.target.value } : p))}
+                  placeholder="version"
+                  className="toa-input"
+                  style={{ width: '8rem' }}
+                />
+                <input
+                  value={entry.file}
+                  onChange={(e) => setPatchEntries(patchEntries.map((p, j) => j === i ? { ...p, file: e.target.value } : p))}
+                  placeholder="file.zip"
+                  className="toa-input"
+                  style={{ width: '12rem' }}
+                />
+                <button
+                  onClick={() => setPatchEntries(patchEntries.filter((_, j) => j !== i))}
+                  className="toa-btn toa-btn-ghost toa-btn-sm"
+                  style={{ color: 'var(--toa-danger)' }}
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => setPatchEntries([...patchEntries, { version: '', file: '' }])}
+              className="toa-btn toa-btn-ghost toa-btn-sm"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', width: 'fit-content' }}
+            >
+              <Plus size={13} />&nbsp;Add Patch Entry
+            </button>
+          </div>
+        </div>
 
         {/* Helper */}
         <div className="toa-panel" style={{ padding: '1.5rem' }}>
