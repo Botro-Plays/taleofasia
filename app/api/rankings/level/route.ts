@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN CharacterReborn cr ON ci.Name = cr.CharacterName
         INNER JOIN UserInfo ui ON ci.AccountName = ui.AccountName
         WHERE ci.AccountName NOT IN ('botro', 'jamai', 'botrojamai', 'aquariusbotro', 'tromailai', 'gmzeus88', 'taleowner', 'Dreddtoters', 'GMCronus')
-          AND ci.Level > 70
+          AND ci.Level >= 100
           AND ISNULL(ui.GameMasterType, 0) <> 1
           AND ISNULL(ui.BanStatus, 0) <> 1
       `;
