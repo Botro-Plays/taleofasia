@@ -198,7 +198,7 @@ BEGIN
     ('vote_reward_cooldown_hours', '12', 'Hours between vote rewards'),
     ('vote_reward_coins', '5', 'Coins awarded per vote'),
     ('discord_invite_url', 'https://discord.com/invite/nszKZPtvqv', 'Discord invite URL'),
-    ('facebook_page_url', 'https://www.facebook.com/ConquestPristonTale', 'Facebook page URL');
+    ('facebook_page_url', 'https://www.facebook.com/TaleOfAsia', 'Facebook page URL');
     PRINT 'Default website configurations inserted.';
 END
 ELSE
