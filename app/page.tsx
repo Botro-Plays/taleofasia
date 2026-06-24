@@ -269,6 +269,7 @@ export default function Home() {
         <div className="toa-cta-links">
           <a href={social.discord || 'https://discord.com/invite/taleofasia'} target="_blank" rel="noopener noreferrer">Discord</a>
           <a href={social.facebook || 'https://www.facebook.com/TaleOfAsia'} target="_blank" rel="noopener noreferrer">Facebook</a>
+          <a href="https://www.youtube.com/@taleofasia" target="_blank" rel="noopener noreferrer">YouTube</a>
           <Link href="/rankings">Rankings</Link>
         </div>
       </section>
