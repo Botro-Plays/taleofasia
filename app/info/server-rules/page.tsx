@@ -23,7 +23,7 @@ export default function ServerRulesPage() {
   }, []);
 
   return (
-    <PageShell label="Tale of Conquest" title={data?.title || 'Server Rules'} backHref="/" backLabel="Home">
+    <PageShell label="Tale of Asia" title={data?.title || 'Server Rules'} backHref="/" backLabel="Home">
       <div className="toa-content-card" style={{ padding: '2rem' }}>
         {loading ? (
           <div className="toa-loading">Loading…</div>

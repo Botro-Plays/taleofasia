@@ -54,13 +54,33 @@ const defaultPages: Record<string, { title: string; content: string }> = {
   'server-rules': {
     title: 'Server Rules',
     content:
-      '<div class="space-y-3">' +
-      '<p class="text-slate-300">Be respectful. No cheating, botting, or harassment.</p>' +
-      '<ul class="list-disc list-inside text-slate-300 space-y-1">' +
-      '<li>No third-party tools.</li>' +
-      '<li>No real-money trading.</li>' +
-      '<li>Follow GM instructions.</li>' +
-      '</ul>' +
+      '<div class="space-y-6">' +
+      '<h2 style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--toa-gold-bright)">Tale of Asia Game Rules</h2>' +
+      '<p style="text-align:center;color:var(--toa-bone)">Welcome to Tale of Asia! To ensure a fair and enjoyable experience for everyone, please follow these rules.</p>' +
+      '<hr style="border:0;border-top:1px solid rgba(184,155,94,0.2);margin:1.5rem 0" />' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">1. Respect All Players</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Treat everyone with respect.</li><li>Harassment, hate speech, racism, and personal attacks are prohibited.</li><li>Toxic behavior will not be tolerated.</li></ul>' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">2. No Cheating or Exploiting</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Use of hacks, bots, macros, exploits, or third-party programs is strictly prohibited.</li><li>Abuse of bugs or exploits may result in suspension or permanent ban.</li></ul>' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">3. No Scamming</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Scamming other players is prohibited.</li><li>Trade carefully and report suspicious activity to staff.</li></ul>' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">4. No Real Money Trading (RMT)</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Selling or buying accounts, items, or in-game currency for real money outside official channels is prohibited.</li></ul>' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">5. No Impersonation</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Pretending to be a Game Master, Moderator, or another player is prohibited.</li></ul>' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">6. Keep Names Appropriate</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Character names, guild names, and pet names must not contain offensive or inappropriate content.</li></ul>' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">7. No Spamming</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Excessive messages, advertisements, or disruptive behavior are not allowed.</li><li>Use world chat responsibly.</li></ul>' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">8. Respect Staff Decisions</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Follow instructions from Game Masters and Moderators.</li><li>Harassing or insulting staff members will not be tolerated.</li></ul>' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">9. Report Problems Responsibly</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Report bugs and rule violations to staff.</li><li>Do not publicly share exploits or encourage abuse.</li></ul>' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">10. Play Fair and Have Fun</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Help build a friendly community.</li><li>Enjoy the adventure and respect fellow players.</li></ul>' +
+      '<hr style="border:0;border-top:1px solid rgba(184,155,94,0.2);margin:1.5rem 0" />' +
+      '<p style="color:var(--toa-danger);font-weight:600">Violations may result in warnings, mute, suspension, or permanent bans depending on severity.</p>' +
+      '<p style="text-align:center;color:var(--toa-gold-bright);font-weight:700">Tale of Asia Staff Team</p>' +
       '</div>',
   },
   about: {
