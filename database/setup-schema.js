@@ -223,7 +223,7 @@ async function setupDatabase() {
         ('crypto_min_usd', '5', 'Minimum USD amount for crypto payments'),
         ('vote_reward_cooldown_hours', '12', 'Hours between vote rewards'),
         ('vote_reward_coins', '5', 'Coins awarded per vote'),
-        ('discord_invite_url', 'https://discord.gg/q4kbv2XtuT', 'Discord invite URL'),
+        ('discord_invite_url', 'https://discord.com/invite/nszKZPtvqv', 'Discord invite URL'),
         ('facebook_page_url', 'https://www.facebook.com/TaleOfAsia', 'Facebook page URL');
       `);
       console.log('Default configurations inserted');

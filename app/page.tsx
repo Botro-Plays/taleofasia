@@ -267,7 +267,7 @@ export default function Home() {
           <Link href="/downloads" className="toa-btn toa-btn-ghost">Download Client</Link>
         </div>
         <div className="toa-cta-links">
-          <a href={social.discord || 'https://discord.gg/taleofasia'} target="_blank" rel="noopener noreferrer">Discord</a>
+          <a href={social.discord || 'https://discord.com/invite/nszKZPtvqv'} target="_blank" rel="noopener noreferrer">Discord</a>
           <a href={social.facebook || 'https://www.facebook.com/taleofasia'} target="_blank" rel="noopener noreferrer">Facebook</a>
           <Link href="/rankings">Rankings</Link>
         </div>
