@@ -36,14 +36,14 @@ export async function GET() {
 
     // Batch fetch clan names for all characters with ClanID > 0
     const clanIds = Array.from(new Set(baseCharacters.map((c: any) => c.ClanID).filter((id: number) => id > 0)));
-    let clanMap = new Map<number, { ClanName: string; ClanZang: string }>();
+    let clanMap = new Map<number, { ClanName: string; ClanZang: string; Note: string }>();
     if (clanIds.length > 0) {
       const inList = clanIds.join(',');
       try {
-        const clans = await clanDB.query<{ IDX: number; ClanName: string; ClanZang: string }>(`
-          SELECT IDX, ClanName, ClanZang FROM CL WHERE IDX IN (${inList})
+        const clans = await clanDB.query<{ IDX: number; ClanName: string; ClanZang: string; Note: string }>(`
+          SELECT IDX, ClanName, ClanZang, Note FROM CL WHERE IDX IN (${inList})
         `);
-        clanMap = new Map(clans.recordset.map((r: any) => [r.IDX, { ClanName: r.ClanName, ClanZang: r.ClanZang }]));
+        clanMap = new Map(clans.recordset.map((r: any) => [r.IDX, { ClanName: r.ClanName, ClanZang: r.ClanZang, Note: r.Note }]));
       } catch (e) {
         console.error('Batch clan lookup failed:', e);
       }
@@ -88,11 +88,12 @@ export async function GET() {
       const clan = character.ClanID > 0 ? clanMap.get(character.ClanID) : undefined;
       const clanName = clan ? (clan.ClanName || 'Unknown') : (character.ClanID > 0 ? 'Unknown' : 'None');
       const isClanLeader = clan ? clan.ClanZang === character.Name : false;
+      const clanNote = clan ? (clan.Note || '') : '';
       const IsOnline = onlineSet.has(character.Name);
       const expRowCur = expByLevel.get(character.Level) || { total: 0, required: 0 };
       const ExpTotalAtLevel = expRowCur.total;
       const ExpRequiredAtLevel = character.Level >= MAX_LEVEL ? 0 : (expRowCur.required || 0); // per-level required amount
-      return { ...character, ClanName: clanName, IsClanLeader: isClanLeader, IsOnline, ExpTotalAtLevel, ExpRequiredAtLevel };
+      return { ...character, ClanName: clanName, IsClanLeader: isClanLeader, ClanNote: clanNote, IsOnline, ExpTotalAtLevel, ExpRequiredAtLevel };
     });
 
     const userData = userResult.recordset.length > 0 ? userResult.recordset[0] : null;

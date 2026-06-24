@@ -15,6 +15,7 @@ interface Character {
   ClanID: number;
   ClanName: string;
   IsClanLeader: boolean;
+  ClanNote?: string;
   RebornStage?: number;
   RebornCount?: number;
   Gold?: number;
@@ -51,6 +52,7 @@ export default function CharactersPage() {
   const [showClanModal, setShowClanModal] = useState(false);
   const [selectedClan, setSelectedClan] = useState<{ clanID: number; clanName: string; characterName: string } | null>(null);
   const [loginMessage, setLoginMessage] = useState('');
+  const [clanNote, setClanNote] = useState('');
   const [clanImage, setClanImage] = useState<File | null>(null);
   const [updating, setUpdating] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -89,9 +91,10 @@ export default function CharactersPage() {
     }
   }, [status, router, fetchCharacters]);
 
-  const handleOpenClanModal = (clanID: number, clanName: string, characterName: string) => {
+  const handleOpenClanModal = (clanID: number, clanName: string, characterName: string, currentNote: string) => {
     setSelectedClan({ clanID, clanName, characterName });
     setLoginMessage('');
+    setClanNote(currentNote);
     setClanImage(null);
     setShowClanModal(true);
   };
@@ -100,6 +103,7 @@ export default function CharactersPage() {
     setShowClanModal(false);
     setSelectedClan(null);
     setLoginMessage('');
+    setClanNote('');
     setClanImage(null);
   };
 
@@ -122,6 +126,23 @@ export default function CharactersPage() {
         const data = await response.json();
         if (!response.ok) {
           throw new Error(data.error || 'Failed to update login message');
+        }
+      }
+
+      if (clanNote !== undefined) {
+        const response = await fetch('/api/clan/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clanID: selectedClan.clanID,
+            characterName: selectedClan.characterName,
+            note: clanNote,
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to update clan note');
         }
       }
 
@@ -291,7 +312,7 @@ export default function CharactersPage() {
                 )}
                 {char.IsClanLeader && char.ClanID > 0 && (
                   <button
-                    onClick={() => handleOpenClanModal(char.ClanID, char.ClanName, char.Name)}
+                    onClick={() => handleOpenClanModal(char.ClanID, char.ClanName, char.Name, char.ClanNote || '')}
                     className="toa-btn toa-btn-ghost toa-btn-sm"
                     style={{ width: '100%', justifyContent: 'center' }}
                   >
@@ -332,6 +353,17 @@ export default function CharactersPage() {
                   onChange={(e) => setLoginMessage(e.target.value)}
                   maxLength={32}
                   placeholder="Enter login message"
+                  className="toa-input"
+                />
+              </div>
+              <div>
+                <label className="toa-label-field">Clan Note <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(max 50 chars)</span></label>
+                <input
+                  type="text"
+                  value={clanNote}
+                  onChange={(e) => setClanNote(e.target.value)}
+                  maxLength={50}
+                  placeholder="Enter clan note"
                   className="toa-input"
                 />
               </div>
