@@ -43,12 +43,18 @@ const defaultPages: Record<string, { title: string; content: string }> = {
   'getting-started': {
     title: 'Getting Started',
     content:
-      '<div class="space-y-4">' +
-      '<p class="text-slate-300">New here? This guide covers account creation, basic controls, and your first quests.</p>' +
-      '<h3 class="text-lg font-semibold text-white">Account</h3>' +
-      '<p class="text-slate-300">Register, verify your email, then login to the game.</p>' +
-      '<h3 class="text-lg font-semibold text-white">First Steps</h3>' +
-      '<p class="text-slate-300">Pick a class, follow the tutorial, and talk to early NPCs.</p>' +
+      '<div class="space-y-6">' +
+      '<h2 style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--toa-gold-bright)">Getting Started</h2>' +
+      '<p style="text-align:center;color:var(--toa-bone)">New here? This guide covers account setup and your first session.</p>' +
+      '<hr style="border:0;border-top:1px solid rgba(184,155,94,0.2);margin:1.5rem 0" />' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">1. Create Your Account</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Register on the website, verify your email (if required), then login.</li></ul>' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">2. Install the Game</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Visit the Downloads page and install the latest client.</li></ul>' +
+      '<h3 style="color:var(--toa-gold);font-weight:700">3. First Steps</h3>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Pick a class, follow the tutorial, and talk to Beginner Support NPC to level-up to 100 and receive starting gears.</li></ul>' +
+      '<hr style="border:0;border-top:1px solid rgba(184,155,94,0.2);margin:1.5rem 0" />' +
+      '<p style="text-align:center;color:var(--toa-gold-bright);font-weight:700">See you in Ricarten!</p>' +
       '</div>',
   },
   'server-rules': {
