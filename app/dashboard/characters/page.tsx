@@ -36,9 +36,10 @@ const classDetails: Record<number, { name: string; image: string }> = {
   10: { name: 'Shaman', image: '/images/CharClass/10.png' },
 };
 
-const getClanIconUrl = (clanID: number) => {
+const getClanIconUrl = (clanID: number, bust?: number) => {
   if (clanID === 0) return 'https://taleofasia.com/ClanImage/999999.bmp';
-  return `https://taleofasia.com/ClanImage/${1000000 + clanID}.bmp`;
+  const base = `https://taleofasia.com/ClanImage/${1000000 + clanID}.bmp`;
+  return bust ? `${base}?t=${bust}` : base;
 };
 
 export default function CharactersPage() {
@@ -53,6 +54,7 @@ export default function CharactersPage() {
   const [clanImage, setClanImage] = useState<File | null>(null);
   const [updating, setUpdating] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [iconBust, setIconBust] = useState(0);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -141,6 +143,7 @@ export default function CharactersPage() {
       }
 
       showToast('Clan updated successfully', 'success');
+      setIconBust(Date.now());
       handleCloseClanModal();
       fetchCharacters();
     } catch (error) {
@@ -263,7 +266,7 @@ export default function CharactersPage() {
                 {char.ClanID > 0 ? (
                   <div className="toa-panel" style={{ padding: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     <Image
-                      src={getClanIconUrl(char.ClanID)}
+                      src={getClanIconUrl(char.ClanID, iconBust)}
                       alt="Clan"
                       width={28}
                       height={28}
