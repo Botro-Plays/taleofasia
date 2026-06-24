@@ -50,6 +50,52 @@ function create24bitBmp(rawRgb: Buffer, width: number, height: number): Buffer {
   return bmp;
 }
 
+function parseBmpToRawRgb(buf: Buffer): { rawRgb: Buffer; width: number; height: number; bpp: number } {
+  // Check BMP signature
+  if (buf[0] !== 0x42 || buf[1] !== 0x4D) {
+    throw new Error('Not a valid BMP file');
+  }
+
+  const dataOffset = buf.readUInt32LE(10);
+  const dibHeaderSize = buf.readUInt32LE(14);
+  const width = buf.readInt32LE(18);
+  const height = Math.abs(buf.readInt32LE(22));
+  const bpp = buf.readUInt16LE(28);
+  const compression = buf.readUInt32LE(30);
+
+  if (compression !== 0) {
+    throw new Error('Compressed BMP files are not supported');
+  }
+
+  const rowSize = Math.floor((bpp * width + 31) / 32) * 4;
+  const channels = bpp / 8;
+  const rawRgb = Buffer.alloc(width * height * 3);
+
+  for (let y = 0; y < height; y++) {
+    // BMP stores rows bottom-to-top
+    const srcRowOffset = dataOffset + (height - 1 - y) * rowSize;
+    for (let x = 0; x < width; x++) {
+      const srcIdx = srcRowOffset + x * channels;
+      const dstIdx = (y * width + x) * 3;
+
+      if (bpp === 24) {
+        rawRgb[dstIdx] = buf[srcIdx + 2];     // R
+        rawRgb[dstIdx + 1] = buf[srcIdx + 1]; // G
+        rawRgb[dstIdx + 2] = buf[srcIdx];     // B
+      } else if (bpp === 32) {
+        rawRgb[dstIdx] = buf[srcIdx + 2];     // R
+        rawRgb[dstIdx + 1] = buf[srcIdx + 1]; // G
+        rawRgb[dstIdx + 2] = buf[srcIdx];     // B
+        // Skip alpha
+      } else {
+        throw new Error(`Unsupported BMP bit depth: ${bpp}`);
+      }
+    }
+  }
+
+  return { rawRgb, width, height, bpp };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -90,15 +136,53 @@ export async function POST(request: NextRequest) {
       const bytes = await clanImage.arrayBuffer();
       const inputBuffer = Buffer.from(bytes);
 
-      // Use sharp to resize to 32x32 and get raw RGB pixel data
-      const rawRgb = await sharp(inputBuffer)
-        .resize(32, 32, { fit: 'fill' })
-        .removeAlpha()
-        .raw()
-        .toBuffer();
+      let rawRgb: Buffer;
+      let imgWidth: number;
+      let imgHeight: number;
+
+      // Check if file is a BMP (sharp cannot read BMP, so handle natively)
+      const isBmp = inputBuffer[0] === 0x42 && inputBuffer[1] === 0x4D;
+
+      if (isBmp) {
+        // Parse BMP directly
+        const parsed = parseBmpToRawRgb(inputBuffer);
+        rawRgb = parsed.rawRgb;
+        imgWidth = parsed.width;
+        imgHeight = parsed.height;
+      } else {
+        // Use sharp for non-BMP formats (PNG, JPEG, GIF, WebP, etc.)
+        const metadata = await sharp(inputBuffer).metadata();
+        imgWidth = metadata.width || 0;
+        imgHeight = metadata.height || 0;
+
+        rawRgb = await sharp(inputBuffer)
+          .resize(32, 32, { fit: 'fill' })
+          .removeAlpha()
+          .raw()
+          .toBuffer();
+
+        // sharp already resized to 32x32
+        imgWidth = 32;
+        imgHeight = 32;
+      }
+
+      // If BMP wasn't 32x32, we need to resize — but sharp can't read BMP
+      // For non-32x32 BMPs, extract raw pixels and use sharp to resize the raw data
+      if (isBmp && (imgWidth !== 32 || imgHeight !== 32)) {
+        // Convert raw RGB to a sharp-compatible format (raw pixel buffer)
+        rawRgb = await sharp(rawRgb, {
+          raw: { width: imgWidth, height: imgHeight, channels: 3 }
+        })
+          .resize(32, 32, { fit: 'fill' })
+          .removeAlpha()
+          .raw()
+          .toBuffer();
+        imgWidth = 32;
+        imgHeight = 32;
+      }
 
       // Construct 24-bit BMP from raw pixels
-      const bmpBuffer = create24bitBmp(rawRgb, 32, 32);
+      const bmpBuffer = create24bitBmp(rawRgb, imgWidth, imgHeight);
 
       // Create upload directory if it doesn't exist
       const uploadDir = 'C:/inetpub/wwwroot/ClanImage/';
