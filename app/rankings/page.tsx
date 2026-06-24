@@ -500,7 +500,7 @@ export default function RankingsPage() {
 
           </div>
         ) : (
-          <div className="toa-seal-card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--toa-muted)' }}>
+          <div className="toa-seal-card" style={{ textAlign: 'center', padding: '3rem', color: 'var(--toa-bone)', fontFamily: 'var(--toa-font-display)', letterSpacing: '0.15em', textTransform: 'uppercase', fontSize: '0.8rem' }}>
             No rankings available
           </div>
         )}
