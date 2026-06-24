@@ -30,9 +30,9 @@ export default function AboutPage() {
         </div>
         <div className="toa-content-card">
           {loading ? (
-            <div className="text-slate-300">Loading...</div>
+            <div className="toa-loading">Loading…</div>
           ) : (
-            <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(data?.content || '') }} />
+            <div className="toa-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(data?.content || '') }} />
           )}
         </div>
       </div>

@@ -23,7 +23,7 @@ export default function GettingStartedPage() {
   }, []);
 
   return (
-    <PageShell label="Tale of Conquest" title={data?.title || 'Getting Started'} backHref="/" backLabel="Home">
+    <PageShell label="Tale of Asia" title={data?.title || 'Getting Started'} backHref="/" backLabel="Home">
       <div className="toa-content-card" style={{ padding: '2rem' }}>
         {loading ? (
           <div className="toa-loading">Loading…</div>

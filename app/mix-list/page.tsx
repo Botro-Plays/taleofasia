@@ -131,17 +131,17 @@ export default function MixListPage() {
         </div>
         {cmsIntro && (
           <div className="toa-content-card" style={{ marginBottom: '1.5rem' }}>
-            <div className="prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: sanitizeHtml(cmsIntro) }} />
+            <div className="toa-prose" dangerouslySetInnerHTML={{ __html: sanitizeHtml(cmsIntro) }} />
           </div>
         )}
 
         <div className="toa-content-card">
           {loading ? (
-            <div className="text-slate-300">Loading…</div>
+            <div className="toa-loading">Loading…</div>
           ) : error ? (
-            <div className="text-red-400">{error}</div>
+            <div style={{ color: 'var(--toa-danger)' }}>{error}</div>
           ) : items.length === 0 ? (
-            <div className="text-slate-300">No mixes available</div>
+            <div style={{ color: 'var(--toa-muted)' }}>No mixes available</div>
           ) : (
             <>
               <div className="toa-filter-row" style={{ marginBottom: '1.5rem' }}>

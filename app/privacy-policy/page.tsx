@@ -73,7 +73,7 @@ export default function PrivacyPolicyPage() {
             </p>
           </section>
 
-          <div className="pt-4 text-sm text-slate-400">
+          <div className="pt-4" style={{ fontSize: '0.85rem', color: 'var(--toa-muted)' }}>
             <Link href="/terms" style={{ color: 'var(--toa-gold)', textDecoration: 'underline' }}>Read our Terms of Service</Link>
           </div>
         </div>
