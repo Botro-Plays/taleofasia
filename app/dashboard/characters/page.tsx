@@ -381,10 +381,10 @@ export default function CharactersPage() {
                 />
               </div>
               <div>
-                <label className="toa-label-field">Clan Image <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(32×32 BMP)</span></label>
+                <label className="toa-label-field">Clan Image <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(auto-converted to 32×32 BMP)</span></label>
                 <input
                   type="file"
-                  accept=".bmp"
+                  accept="image/png,image/jpeg,image/bmp,image/gif,image/webp,.png,.jpg,.jpeg,.bmp,.gif,.webp"
                   onChange={(e) => setClanImage(e.target.files?.[0] || null)}
                   className="toa-input"
                   style={{ cursor: 'pointer' }}
