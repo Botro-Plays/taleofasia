@@ -48,9 +48,9 @@ const defaultPages: Record<string, { title: string; content: string }> = {
       '<p style="text-align:center;color:var(--toa-bone)">New here? This guide covers account setup and your first session.</p>' +
       '<hr style="border:0;border-top:1px solid rgba(184,155,94,0.2);margin:1.5rem 0" />' +
       '<h3 style="color:var(--toa-gold);font-weight:700">1. Create Your Account</h3>' +
-      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Register on the website, verify your email (if required), then login.</li></ul>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li><a href="/register" style="color:var(--toa-gold);text-decoration:underline">Register</a> on the website, verify your email (if required), then login.</li></ul>' +
       '<h3 style="color:var(--toa-gold);font-weight:700">2. Install the Game</h3>' +
-      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Visit the Downloads page and install the latest client.</li></ul>' +
+      '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Visit the <a href="/downloads" style="color:var(--toa-gold);text-decoration:underline">Downloads</a> page and install the latest client.</li></ul>' +
       '<h3 style="color:var(--toa-gold);font-weight:700">3. First Steps</h3>' +
       '<ul style="list-style:disc;padding-left:1.5rem;color:var(--toa-bone)"><li>Pick a class, follow the tutorial, and talk to Beginner Support NPC to level-up to 100 and receive starting gears.</li></ul>' +
       '<hr style="border:0;border-top:1px solid rgba(184,155,94,0.2);margin:1.5rem 0" />' +
