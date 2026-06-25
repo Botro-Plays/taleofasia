@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { GlobalTheme } from '@/app/components/GlobalTheme';
+import { Volume2, VolumeX } from 'lucide-react';
 
 interface CrownHolders {
   blessCastle: { clanName: string; iconID: number } | null;
@@ -32,6 +33,8 @@ const CLASS_DATA = [
 
 export default function Home() {
   const router = useRouter();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
   const [crownHolders, setCrownHolders] = useState<CrownHolders>({
     blessCastle: null,
     surviveOrDie: null,
@@ -41,6 +44,14 @@ export default function Home() {
     onlineUsers: 0,
   });
   const { data: session } = useSession();
+
+  const toggleSound = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    if (!video.muted && video.paused) video.play();
+    setIsMuted(video.muted);
+  };
   const [stats, setStats] = useState({ yearsLegacy: 0, activePlayers: 0 });
   const [social, setSocial] = useState<{ discord?: string; facebook?: string }>({});
   const [selectedClass, setSelectedClass] = useState(0);
@@ -136,6 +147,7 @@ export default function Home() {
       <section className="toa-hero">
         {/* Video background */}
         <video
+          ref={videoRef}
           autoPlay
           loop
           muted
@@ -147,6 +159,24 @@ export default function Home() {
         >
           <source src="/hero-bg.mp4" type="video/mp4" />
         </video>
+
+        {/* Sound toggle */}
+        <button
+          onClick={toggleSound}
+          title={isMuted ? 'Unmute' : 'Mute'}
+          style={{
+            position: 'absolute', bottom: '7rem', right: '1.5rem', zIndex: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '2.25rem', height: '2.25rem', borderRadius: '50%',
+            background: 'rgba(8,8,12,0.55)', border: '1px solid rgba(184,155,94,0.25)',
+            color: isMuted ? 'rgba(255,255,255,0.45)' : 'var(--toa-gold-bright)',
+            cursor: 'pointer', backdropFilter: 'blur(6px)',
+            transition: 'all 0.2s ease',
+            boxShadow: isMuted ? 'none' : '0 0 10px rgba(212,185,122,0.35)',
+          }}
+        >
+          {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+        </button>
 
         {/* Ember particles */}
         {embers.map(e => (
