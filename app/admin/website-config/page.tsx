@@ -476,6 +476,17 @@ export default function WebsiteConfigPage() {
               <p style={{ fontSize: '0.75rem', color: 'var(--toa-muted)', marginTop: '0.25rem' }}>Configure this URL in your XtremeTop100 control panel under Postback settings.</p>
             </div>
             <div>
+              <label className="toa-label-field">Website Return URL <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(read-only — set this as your Website URL on XtremeTop100)</span></label>
+              <input
+                type="text"
+                value="https://taleofasia.com/vote-return"
+                readOnly
+                className="toa-input"
+                style={{ opacity: 0.6, cursor: 'default' }}
+              />
+              <p style={{ fontSize: '0.75rem', color: 'var(--toa-muted)', marginTop: '0.25rem' }}>Logged-in users who click your listing on XtremeTop100 will be sent to /dashboard; guests will go to the landing page.</p>
+            </div>
+            <div>
               <label className="toa-label-field">XtremeTop100 Site ID</label>
               <input
                 type="text"

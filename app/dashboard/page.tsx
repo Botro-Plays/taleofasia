@@ -328,7 +328,7 @@ export default function DashboardPage() {
 
         {/* ── VOTING ── */}
         <div className="toa-label" style={{ marginBottom: '1rem' }}>Vote for Rewards</div>
-        {voteConfig.testingMode && (
+        {isAdmin && voteConfig.testingMode && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 0.875rem', background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.3)', borderRadius: '4px', fontSize: '0.75rem', color: 'var(--toa-warning)' }}>
             <span style={{ fontWeight: 700 }}>⚠ Testing Mode Active</span>
             <span style={{ color: 'var(--toa-muted)' }}>— Use Simulate Vote to test the full flow without going through XtremeTop100.</span>
@@ -368,7 +368,7 @@ export default function DashboardPage() {
                 <ExternalLink size={13} />
                 Vote Now
               </a>
-              {voteConfig.testingMode && (
+              {isAdmin && voteConfig.testingMode && (
                 <button
                   onClick={handleSimulateVote}
                   disabled={simulatingVote}
