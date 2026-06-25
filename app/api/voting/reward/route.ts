@@ -71,12 +71,20 @@ export async function POST(request: NextRequest) {
       username,
     });
 
-    // Mark vote as claimed
-    await webDB.query(`
+    // Atomically mark vote as claimed (prevents race condition double-claim)
+    const claimResult = await webDB.query(`
       UPDATE VoteLogs
       SET RewardClaimed = 1
-      WHERE LogID = @logId
+      WHERE LogID = @logId AND RewardClaimed = 0
     `, { logId: lastVote.LogID });
+
+    if (claimResult.rowsAffected[0] === 0) {
+      // Another request already claimed this vote
+      return NextResponse.json(
+        { error: 'Reward already claimed. Please vote again.' },
+        { status: 400 }
+      );
+    }
 
     // Log the reward
     await logApi({

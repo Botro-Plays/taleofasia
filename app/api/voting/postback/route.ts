@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { webDB } from '@/lib/db';
+import { webDB, userDB } from '@/lib/db';
 
 // XtremeTop100 postback IPs (documented Nov 2025)
 const ALLOWED_POSTBACK_IPS = new Set([
@@ -48,6 +48,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'Invalid username format' },
         { status: 400 }
+      );
+    }
+
+    // Check for duplicate postback — reject if a vote from this IP already exists within cooldown
+    const cooldownResult = await webDB.query(`
+      SELECT ConfigValue FROM WebsiteConfigs WHERE ConfigKey = 'vote_reward_cooldown_hours'
+    `);
+    const cooldownHours = parseInt(cooldownResult.recordset[0]?.ConfigValue || '12');
+
+    const duplicateCheck = await webDB.query(`
+      SELECT TOP 1 LogID FROM VoteLogs
+      WHERE IPAddress = @ip AND VoteTime > DATEADD(HOUR, -@cooldown, GETDATE())
+    `, { ip: votingIp, cooldown: cooldownHours });
+
+    if (duplicateCheck.recordset.length > 0) {
+      console.warn(`[postback] Duplicate vote from IP: ${votingIp} for user: ${username}`);
+      return NextResponse.json(
+        { error: 'Duplicate vote' },
+        { status: 409 }
+      );
+    }
+
+    // Verify the account exists before logging the vote
+    const userCheck = await userDB.query(`
+      SELECT AccountName FROM UserInfo WHERE AccountName = @username
+    `, { username });
+
+    if (userCheck.recordset.length === 0) {
+      console.warn(`[postback] Vote for non-existent account: ${username}`);
+      return NextResponse.json(
+        { error: 'Account not found' },
+        { status: 404 }
       );
     }
 
