@@ -149,15 +149,7 @@ export default function Home() {
           />
         ))}
 
-        {/* Title */}
-        <h1 className="toa-hero-title">TALE OF ASIA</h1>
-        <p className="toa-hero-sub">
-          A Priston Tale Game.
-          Ten classes. Endless grind. No mercy.
-          Forge your legend or die trying.
-        </p>
-
-        {/* CTA — single ghost button */}
+        {/* CTA */}
         <div className="toa-hero-cta">
           <Link href="/register" className="toa-btn toa-btn-solid">
             Enter the Warpath
