@@ -37,7 +37,7 @@ const PAYMENT_KEYS = [
   'payment_min_usd', 'paymongo_min_php', 'paypal_min_usd', 'crypto_min_usd',
 ];
 
-const VOTING_KEYS = ['vote_reward_cooldown_hours', 'vote_reward_coins', 'xtremetop100_site_id'];
+const VOTING_KEYS = ['vote_reward_cooldown_hours', 'vote_reward_coins', 'xtremetop100_site_id', 'vote_testing_mode'];
 const PAYMONGO_ALERT_RECIPIENTS_KEY = 'paymongo_alert_recipients';
 const READONLY_KEYS = new Set(['crypto_usd_to_credit_rate']);
 
@@ -507,6 +507,23 @@ export default function WebsiteConfigPage() {
                   className="toa-input"
                 />
               </div>
+            </div>
+            <div className="toa-panel" style={{ padding: '0.875rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', borderColor: configs.find(c => c.ConfigKey === 'vote_testing_mode')?.ConfigValue === 'true' ? 'var(--toa-warning)' : 'rgba(184,155,94,0.15)' }}>
+              <div>
+                <div style={{ fontWeight: 600, color: 'var(--toa-bone)', fontSize: '0.875rem' }}>Testing Mode {configs.find(c => c.ConfigKey === 'vote_testing_mode')?.ConfigValue === 'true' && <span style={{ color: 'var(--toa-warning)', fontSize: '0.7rem', marginLeft: '0.5rem' }}>● ACTIVE</span>}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--toa-muted)', marginTop: '0.125rem' }}>Disables IP whitelist, duplicate checks, and user existence validation. You can simulate postbacks from your browser: <code style={{ color: 'var(--toa-gold-bright)', fontSize: '0.7rem' }}>taleofasia.com/api/voting/postback?votingip=TEST&custom=USERNAME</code></div>
+              </div>
+              <button type="button" onClick={() => {
+                const current = configs.find(c => c.ConfigKey === 'vote_testing_mode');
+                const newVal = current?.ConfigValue === 'true' ? 'false' : 'true';
+                if (current) {
+                  handleConfigChange('vote_testing_mode', newVal);
+                } else {
+                  setConfigs([...configs, { ConfigKey: 'vote_testing_mode', ConfigValue: newVal, Description: 'Enable testing mode to bypass vote restrictions' }]);
+                }
+              }} style={{ position: 'relative', display: 'inline-flex', height: '1.5rem', width: '2.75rem', alignItems: 'center', borderRadius: '9999px', border: 'none', cursor: 'pointer', transition: 'background-color 0.2s', background: configs.find(c => c.ConfigKey === 'vote_testing_mode')?.ConfigValue === 'true' ? 'var(--toa-warning)' : 'rgba(107,101,119,0.4)', flexShrink: 0 }}>
+                <span style={{ display: 'inline-block', height: '1.125rem', width: '1.125rem', borderRadius: '9999px', background: 'white', transition: 'transform 0.2s', transform: configs.find(c => c.ConfigKey === 'vote_testing_mode')?.ConfigValue === 'true' ? 'translateX(1.375rem)' : 'translateX(0.25rem)' }} />
+              </button>
             </div>
           </div>
           <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>

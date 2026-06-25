@@ -22,14 +22,22 @@ function getClientIP(request: NextRequest): string | null {
 
 export async function GET(request: NextRequest) {
   try {
+    // Check if testing mode is enabled
+    const testingModeResult = await webDB.query(`
+      SELECT ConfigValue FROM WebsiteConfigs WHERE ConfigKey = 'vote_testing_mode'
+    `);
+    const testingMode = testingModeResult.recordset[0]?.ConfigValue === 'true';
+
     const clientIP = getClientIP(request);
 
-    if (!clientIP || !ALLOWED_POSTBACK_IPS.has(clientIP)) {
-      console.warn(`[postback] Rejected request from IP: ${clientIP || 'unknown'}`);
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      );
+    if (!testingMode) {
+      if (!clientIP || !ALLOWED_POSTBACK_IPS.has(clientIP)) {
+        console.warn(`[postback] Rejected request from IP: ${clientIP || 'unknown'}`);
+        return NextResponse.json(
+          { error: 'Forbidden' },
+          { status: 403 }
+        );
+      }
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -51,36 +59,38 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check for duplicate postback — reject if a vote from this IP already exists within cooldown
-    const cooldownResult = await webDB.query(`
-      SELECT ConfigValue FROM WebsiteConfigs WHERE ConfigKey = 'vote_reward_cooldown_hours'
-    `);
-    const cooldownHours = parseInt(cooldownResult.recordset[0]?.ConfigValue || '12');
+    if (!testingMode) {
+      // Check for duplicate postback — reject if a vote from this IP already exists within cooldown
+      const cooldownResult = await webDB.query(`
+        SELECT ConfigValue FROM WebsiteConfigs WHERE ConfigKey = 'vote_reward_cooldown_hours'
+      `);
+      const cooldownHours = parseInt(cooldownResult.recordset[0]?.ConfigValue || '12');
 
-    const duplicateCheck = await webDB.query(`
-      SELECT TOP 1 LogID FROM VoteLogs
-      WHERE IPAddress = @ip AND VoteTime > DATEADD(HOUR, -@cooldown, GETDATE())
-    `, { ip: votingIp, cooldown: cooldownHours });
+      const duplicateCheck = await webDB.query(`
+        SELECT TOP 1 LogID FROM VoteLogs
+        WHERE IPAddress = @ip AND VoteTime > DATEADD(HOUR, -@cooldown, GETDATE())
+      `, { ip: votingIp, cooldown: cooldownHours });
 
-    if (duplicateCheck.recordset.length > 0) {
-      console.warn(`[postback] Duplicate vote from IP: ${votingIp} for user: ${username}`);
-      return NextResponse.json(
-        { error: 'Duplicate vote' },
-        { status: 409 }
-      );
-    }
+      if (duplicateCheck.recordset.length > 0) {
+        console.warn(`[postback] Duplicate vote from IP: ${votingIp} for user: ${username}`);
+        return NextResponse.json(
+          { error: 'Duplicate vote' },
+          { status: 409 }
+        );
+      }
 
-    // Verify the account exists before logging the vote
-    const userCheck = await userDB.query(`
-      SELECT AccountName FROM UserInfo WHERE AccountName = @username
-    `, { username });
+      // Verify the account exists before logging the vote
+      const userCheck = await userDB.query(`
+        SELECT AccountName FROM UserInfo WHERE AccountName = @username
+      `, { username });
 
-    if (userCheck.recordset.length === 0) {
-      console.warn(`[postback] Vote for non-existent account: ${username}`);
-      return NextResponse.json(
-        { error: 'Account not found' },
-        { status: 404 }
-      );
+      if (userCheck.recordset.length === 0) {
+        console.warn(`[postback] Vote for non-existent account: ${username}`);
+        return NextResponse.json(
+          { error: 'Account not found' },
+          { status: 404 }
+        );
+      }
     }
 
     // Log the vote
