@@ -130,7 +130,15 @@ export default function DashboardPage() {
       const data = await response.json();
       if (response.ok) {
         showToast(data.message, 'success');
+        // Immediately mark all votes as claimed locally for instant UI feedback
+        setVotingLogs(prev => prev.map(log => ({ ...log, RewardClaimed: true })));
+        // Update coins locally
+        if (typeof data.reward === 'number') {
+          setCoins(prev => (prev !== null ? prev + data.reward : prev));
+        }
+        // Re-fetch to confirm from server
         fetchUserData();
+        fetchVotingLogs();
       } else {
         showToast(data.error, 'error');
       }
