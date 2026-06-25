@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { webDB, userDB } from '@/lib/db';
+import { invalidate } from '@/lib/cache';
 import { logApi, logError } from '@/lib/logging';
 
 export async function POST(request: NextRequest) {
@@ -74,6 +75,9 @@ export async function POST(request: NextRequest) {
       details: `VOTE_REWARD: Awarded ${totalReward} coins for ${unclaimedCount} vote${unclaimedCount !== 1 ? 's' : ''}`,
       ip: request.headers.get('x-forwarded-for') || '127.0.0.1',
     });
+
+    // Invalidate voting logs cache so dashboard updates immediately
+    invalidate(`votelogs:${username}`);
 
     return NextResponse.json({
       message: `Successfully claimed ${totalReward} coins from ${unclaimedCount} vote${unclaimedCount !== 1 ? 's' : ''}!`,

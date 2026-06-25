@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { webDB, userDB } from '@/lib/db';
+import { invalidate } from '@/lib/cache';
 
 // XtremeTop100 postback IPs (documented Nov 2025)
 const ALLOWED_POSTBACK_IPS = new Set([
@@ -101,6 +102,9 @@ export async function GET(request: NextRequest) {
       username,
       ip: votingIp,
     });
+
+    // Invalidate voting logs cache so dashboard shows the new vote immediately
+    invalidate(`votelogs:${username}`);
 
     // Log the postback
     await webDB.query(`
