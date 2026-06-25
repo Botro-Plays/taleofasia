@@ -407,7 +407,7 @@ a:hover { color: var(--toa-gold-bright); }
   position: relative;
   overflow: hidden;
   background: var(--toa-void);
-  background-image: url('/hero-bg.png');
+  background-image: url('/hero-bg.gif');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
