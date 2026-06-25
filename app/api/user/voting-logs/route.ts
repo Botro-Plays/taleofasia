@@ -18,7 +18,7 @@ export async function GET() {
 
     const logs = await cached(`votelogs:${username}`, 15_000, async () => {
       const votingLogsResult = await webDB.query(`
-        SELECT TOP 10 LogID, VoteTime, IPAddress AS IP
+        SELECT TOP 10 LogID, VoteTime, IPAddress AS IP, RewardClaimed
         FROM VoteLogs
         WHERE AccountName = @username
         ORDER BY VoteTime DESC

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { GlobalTheme } from '@/app/components/GlobalTheme';
-import { Gem, Clock, Users, Sword, CreditCard, KeyRound, Shield, ExternalLink, ChevronRight, CheckCircle, XCircle, User } from 'lucide-react';
+import { Gem, Clock, Users, Sword, CreditCard, KeyRound, Shield, ExternalLink, ChevronRight, CheckCircle, XCircle, User, Gift } from 'lucide-react';
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -306,8 +306,13 @@ export default function DashboardPage() {
           <div className="toa-seal-corner toa-seal-corner-br" />
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
             <div>
-              <div style={{ fontFamily: 'var(--toa-font-display)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--toa-gold-bright)', marginBottom: '0.35rem' }}>
+              <div style={{ fontFamily: 'var(--toa-font-display)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--toa-gold-bright)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 Server Vote
+                {votingLogs.some(log => !log.RewardClaimed) && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', fontWeight: 600, color: 'var(--toa-success)', background: 'rgba(34,197,94,0.12)', padding: '0.15rem 0.5rem', borderRadius: '9999px', border: '1px solid rgba(34,197,94,0.25)', textTransform: 'none', letterSpacing: 0 }}>
+                    <Gift size={11} /> {voteConfig.rewardCoins} Coins ready
+                  </span>
+                )}
               </div>
               <p style={{ fontSize: '0.82rem', color: 'var(--toa-muted)', margin: 0 }}>
                 Vote every {voteConfig.cooldownHours} hours — earn <span style={{ color: 'var(--toa-gold-bright)' }}>{voteConfig.rewardCoins} Coins</span> per vote.
@@ -326,8 +331,9 @@ export default function DashboardPage() {
               </a>
               <button
                 onClick={handleClaimReward}
-                disabled={claimingReward}
+                disabled={claimingReward || !votingLogs.some(log => !log.RewardClaimed)}
                 className="toa-btn toa-btn-ghost toa-btn-sm"
+                style={votingLogs.some(log => !log.RewardClaimed) ? { borderColor: 'var(--toa-success)', color: 'var(--toa-success)' } : {}}
               >
                 {claimingReward ? 'Claiming…' : 'Claim Reward'}
               </button>
@@ -347,12 +353,23 @@ export default function DashboardPage() {
                   borderBottom: i < Math.min(votingLogs.length, 5) - 1 ? '1px solid rgba(184,155,94,0.07)' : 'none',
                 }}
               >
-                <span style={{ color: 'var(--toa-bone)' }}>
-                  {new Date(log.VoteTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                  <span style={{ color: 'var(--toa-muted)', marginLeft: '0.75rem' }}>
-                    {new Date(log.VoteTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <span style={{ color: 'var(--toa-bone)' }}>
+                    {new Date(log.VoteTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    <span style={{ color: 'var(--toa-muted)', marginLeft: '0.75rem' }}>
+                      {new Date(log.VoteTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </span>
-                </span>
+                  {log.RewardClaimed ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--toa-muted)', background: 'rgba(107,101,119,0.15)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>
+                      <CheckCircle size={10} /> Claimed
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', fontWeight: 600, color: 'var(--toa-success)', background: 'rgba(34,197,94,0.12)', padding: '0.1rem 0.4rem', borderRadius: '9999px', border: '1px solid rgba(34,197,94,0.2)' }}>
+                      <Gift size={10} /> Claimable
+                    </span>
+                  )}
+                </div>
                 <span style={{ color: 'var(--toa-muted)', fontFamily: 'monospace', fontSize: '0.75rem' }}>{log.IP}</span>
               </div>
             ))}
