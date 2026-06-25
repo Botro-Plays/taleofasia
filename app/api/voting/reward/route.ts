@@ -16,12 +16,12 @@ export async function POST(request: NextRequest) {
 
     const username = session.user.id;
 
-    // Fetch user's most recent vote log
+    // Fetch all unclaimed votes
     const voteCheck = await webDB.query(`
-      SELECT TOP 1 LogID, VoteTime, RewardClaimed
+      SELECT LogID
       FROM VoteLogs
-      WHERE AccountName = @username
-      ORDER BY VoteTime DESC
+      WHERE AccountName = @username AND RewardClaimed = 0
+      ORDER BY VoteTime ASC
     `, { username });
 
     if (voteCheck.recordset.length === 0) {
@@ -31,14 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const lastVote = voteCheck.recordset[0];
-
-    if (lastVote.RewardClaimed === 1) {
-      return NextResponse.json(
-        { error: 'Reward already claimed. Please vote again.' },
-        { status: 400 }
-      );
-    }
+    const unclaimedCount = voteCheck.recordset.length;
 
     // Get reward amount from config
     const rewardConfig = await webDB.query(`
@@ -47,7 +40,8 @@ export async function POST(request: NextRequest) {
     `);
     const configMap: Record<string, string> = {};
     rewardConfig.recordset.forEach((r: any) => { configMap[r.ConfigKey] = r.ConfigValue; });
-    const rewardAmount = parseInt(configMap['vote_reward_coins'] || '5');
+    const rewardPerVote = parseInt(configMap['vote_reward_coins'] || '5');
+    const totalReward = rewardPerVote * unclaimedCount;
 
     // Award coins to user
     await userDB.query(`
@@ -55,19 +49,18 @@ export async function POST(request: NextRequest) {
       SET Coins = Coins + @reward
       WHERE AccountName = @username
     `, {
-      reward: rewardAmount,
+      reward: totalReward,
       username,
     });
 
-    // Atomically mark vote as claimed (prevents race condition double-claim)
+    // Atomically mark all unclaimed votes as claimed
     const claimResult = await webDB.query(`
       UPDATE VoteLogs
       SET RewardClaimed = 1
-      WHERE LogID = @logId AND RewardClaimed = 0
-    `, { logId: lastVote.LogID });
+      WHERE AccountName = @username AND RewardClaimed = 0
+    `, { username });
 
     if (claimResult.rowsAffected[0] === 0) {
-      // Another request already claimed this vote
       return NextResponse.json(
         { error: 'Reward already claimed. Please vote again.' },
         { status: 400 }
@@ -78,13 +71,14 @@ export async function POST(request: NextRequest) {
     await logApi({
       action: 'ADMIN_ACTION',
       account: username,
-      details: `VOTE_REWARD: Awarded ${rewardAmount} coins for voting`,
+      details: `VOTE_REWARD: Awarded ${totalReward} coins for ${unclaimedCount} vote${unclaimedCount !== 1 ? 's' : ''}`,
       ip: request.headers.get('x-forwarded-for') || '127.0.0.1',
     });
 
     return NextResponse.json({
-      message: `Successfully claimed ${rewardAmount} coins!`,
-      reward: rewardAmount
+      message: `Successfully claimed ${totalReward} coins from ${unclaimedCount} vote${unclaimedCount !== 1 ? 's' : ''}!`,
+      reward: totalReward,
+      votesClaimed: unclaimedCount,
     });
   } catch (error) {
     await logError({ where: 'voting/reward', error, account: undefined, ip: '127.0.0.1' });

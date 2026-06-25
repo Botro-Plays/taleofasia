@@ -308,11 +308,15 @@ export default function DashboardPage() {
             <div>
               <div style={{ fontFamily: 'var(--toa-font-display)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--toa-gold-bright)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 Server Vote
-                {votingLogs.some(log => !log.RewardClaimed) && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', fontWeight: 600, color: 'var(--toa-success)', background: 'rgba(34,197,94,0.12)', padding: '0.15rem 0.5rem', borderRadius: '9999px', border: '1px solid rgba(34,197,94,0.25)', textTransform: 'none', letterSpacing: 0 }}>
-                    <Gift size={11} /> {voteConfig.rewardCoins} Coins ready
-                  </span>
-                )}
+                {votingLogs.filter(log => !log.RewardClaimed).length > 0 && (() => {
+                  const unclaimed = votingLogs.filter(log => !log.RewardClaimed).length;
+                  const totalCoins = unclaimed * voteConfig.rewardCoins;
+                  return (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', fontWeight: 600, color: 'var(--toa-success)', background: 'rgba(34,197,94,0.12)', padding: '0.15rem 0.5rem', borderRadius: '9999px', border: '1px solid rgba(34,197,94,0.25)', textTransform: 'none', letterSpacing: 0 }}>
+                      <Gift size={11} /> {totalCoins} Coins ready{unclaimed > 1 ? ` (${unclaimed} votes)` : ''}
+                    </span>
+                  );
+                })()}
               </div>
               <p style={{ fontSize: '0.82rem', color: 'var(--toa-muted)', margin: 0 }}>
                 Vote every {voteConfig.cooldownHours} hours — earn <span style={{ color: 'var(--toa-gold-bright)' }}>{voteConfig.rewardCoins} Coins</span> per vote.
