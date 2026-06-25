@@ -364,6 +364,9 @@ export default function DashboardPage() {
                 rel="noopener noreferrer"
                 className="toa-btn toa-btn-solid toa-btn-sm"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                onClick={() => {
+                  document.cookie = 'toa_vote_return=1; max-age=3600; path=/; SameSite=Lax';
+                }}
               >
                 <ExternalLink size={13} />
                 Vote Now

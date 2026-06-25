@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
@@ -30,6 +31,7 @@ const CLASS_DATA = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [crownHolders, setCrownHolders] = useState<CrownHolders>({
     blessCastle: null,
     surviveOrDie: null,
@@ -50,6 +52,14 @@ export default function Home() {
     fetch('/api/stats').then(r => r.json()).then(setStats).catch(() => {});
     fetch('/api/public/config').then(r => r.json()).then(d => setSocial(d?.social || {})).catch(() => {});
   }, []);
+
+  // Redirect logged-in users back to dashboard if they came from voting
+  useEffect(() => {
+    if (session?.user && document.cookie.includes('toa_vote_return=1')) {
+      document.cookie = 'toa_vote_return=; max-age=0; path=/';
+      router.replace('/dashboard');
+    }
+  }, [session, router]);
 
   useEffect(() => {
     const fetchStatus = () => {
