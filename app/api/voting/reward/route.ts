@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get reward amount and cooldown from config
+    // Get reward amount from config
     const rewardConfig = await webDB.query(`
       SELECT ConfigKey, ConfigValue FROM WebsiteConfigs 
       WHERE ConfigKey IN ('vote_reward_coins', 'vote_reward_cooldown_hours')
@@ -48,18 +48,6 @@ export async function POST(request: NextRequest) {
     const configMap: Record<string, string> = {};
     rewardConfig.recordset.forEach((r: any) => { configMap[r.ConfigKey] = r.ConfigValue; });
     const rewardAmount = parseInt(configMap['vote_reward_coins'] || '5');
-    const cooldownHours = parseInt(configMap['vote_reward_cooldown_hours'] || '12');
-
-    // Check cooldown — reject if vote was within cooldown period
-    const voteTime = new Date(lastVote.VoteTime);
-    const hoursSinceVote = (Date.now() - voteTime.getTime()) / (1000 * 60 * 60);
-    if (hoursSinceVote < cooldownHours) {
-      const hoursLeft = Math.ceil(cooldownHours - hoursSinceVote);
-      return NextResponse.json(
-        { error: `Please wait ${hoursLeft} more hour${hoursLeft !== 1 ? 's' : ''} before claiming your reward.` },
-        { status: 400 }
-      );
-    }
 
     // Award coins to user
     await userDB.query(`

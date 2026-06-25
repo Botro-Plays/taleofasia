@@ -315,7 +315,7 @@ export default function DashboardPage() {
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <a
-                href={`https://www.xtremetop100.com/in.php?site=${voteConfig.siteId}&postback=${encodeURIComponent(session?.user?.name || '')}`}
+                href={`https://www.xtremetop100.com/in.php?site=${voteConfig.siteId}&custom=${encodeURIComponent(session?.user?.name || '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="toa-btn toa-btn-solid toa-btn-sm"
