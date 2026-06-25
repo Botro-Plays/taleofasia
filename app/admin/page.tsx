@@ -9,7 +9,7 @@ import {
   Settings2, Gamepad2, Users, CreditCard, DollarSign,
   Timer, ScrollText, BarChart2, FileText, Zap, Newspaper,
   ChevronLeft, AlertTriangle, CheckCircle, WifiOff, Clock,
-  XCircle, TrendingUp, ShieldAlert,
+  XCircle, TrendingUp, ShieldAlert, Vote,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -128,6 +128,7 @@ export default function AdminDashboardPage() {
     { Icon: DollarSign, title: 'Finances',           description: 'Packages, pricing, and revenue',       href: '/admin/finances',       accent: 'var(--toa-success)' },
     { Icon: Timer,      title: 'Cron Monitor',       description: 'Scheduled jobs and manual triggers',   href: '/admin/cron',           accent: 'var(--toa-warning)' },
     { Icon: ScrollText, title: 'Audit Logs',         description: 'System logs and user activity',        href: '/admin/logs',           accent: 'var(--toa-info)' },
+    { Icon: Vote,      title: 'Voting Logs',        description: 'Vote records and reward claims',       href: '/admin/voting-logs',    accent: 'var(--toa-success)' },
     { Icon: BarChart2,  title: 'Game Logs',          description: 'Read-only search across LogDB',        href: '/admin/game-logs',      accent: 'var(--toa-muted)' },
     { Icon: FileText,   title: 'Pages (CMS)',        description: 'Edit public info and download pages',  href: '/admin/pages',          accent: 'var(--toa-gold)' },
     { Icon: Newspaper,  title: 'Launcher News',      description: 'News & patch notes shown in launcher',  href: '/admin/launcher-news',  accent: 'var(--toa-warning)' },

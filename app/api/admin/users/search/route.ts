@@ -157,24 +157,41 @@ export async function GET(request: NextRequest) {
         );
       } catch {}
     } else {
-      if (!q) return NextResponse.json({ results: [], type: 'account' });
-      res = await userDB.query(
-        `SELECT TOP 25 
-           ui.AccountName,
-           ui.Email,
-           ISNULL(ui.Coins, 0) as Coins,
-           ISNULL(utc.Coins, 0) as TimePoints,
-           ISNULL(ui.BanStatus, 0) as BanStatus,
-           ISNULL(ui.GameMasterType, 0) as GameMasterType,
-           ISNULL(ui.GameMasterLevel, 0) as GameMasterLevel,
-           ui.RegisDay,
-           ISNULL(ui.Flag,0) as Flag
-         FROM UserInfo ui
-         LEFT JOIN UserTimeCoin utc ON ui.AccountName = utc.AccountName
-         WHERE ui.AccountName LIKE @q
-         ORDER BY ui.AccountName`,
-        { q: `${q}%` }
-      );
+      if (q) {
+        res = await userDB.query(
+          `SELECT TOP 25 
+             ui.AccountName,
+             ui.Email,
+             ISNULL(ui.Coins, 0) as Coins,
+             ISNULL(utc.Coins, 0) as TimePoints,
+             ISNULL(ui.BanStatus, 0) as BanStatus,
+             ISNULL(ui.GameMasterType, 0) as GameMasterType,
+             ISNULL(ui.GameMasterLevel, 0) as GameMasterLevel,
+             ui.RegisDay,
+             ISNULL(ui.Flag,0) as Flag
+           FROM UserInfo ui
+           LEFT JOIN UserTimeCoin utc ON ui.AccountName = utc.AccountName
+           WHERE ui.AccountName LIKE @q
+           ORDER BY ui.AccountName`,
+          { q: `${q}%` }
+        );
+      } else {
+        res = await userDB.query(
+          `SELECT TOP 100
+             ui.AccountName,
+             ui.Email,
+             ISNULL(ui.Coins, 0) as Coins,
+             ISNULL(utc.Coins, 0) as TimePoints,
+             ISNULL(ui.BanStatus, 0) as BanStatus,
+             ISNULL(ui.GameMasterType, 0) as GameMasterType,
+             ISNULL(ui.GameMasterLevel, 0) as GameMasterLevel,
+             ui.RegisDay,
+             ISNULL(ui.Flag,0) as Flag
+           FROM UserInfo ui
+           LEFT JOIN UserTimeCoin utc ON ui.AccountName = utc.AccountName
+           ORDER BY ui.AccountName`
+        );
+      }
       try {
         await webDB.query(
           `INSERT INTO WebAuditLogs (AccountName, Action, Details, IPAddress)

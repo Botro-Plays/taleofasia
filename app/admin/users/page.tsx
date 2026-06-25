@@ -140,15 +140,9 @@ export default function AdminUsersPage() {
   // Remote search (accounts or characters)
   const runSearch = async (q: string, type: SearchType) => {
     const query = q.trim();
-    if (!query) {
-      setAccountResults([]);
-      setCharacterResults([]);
-      setBaseCharacterResults([]);
-      return;
-    }
     setSearching(true);
     try {
-      const res = await fetch(`/api/admin/users/search?type=${encodeURIComponent(type)}&q=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/admin/users/search?type=${encodeURIComponent(type)}${query ? `&q=${encodeURIComponent(query)}` : ''}`);
       const data = await res.json();
       if (data.type === 'account') {
         setAccountResults(sortAccounts((data.results || []) as User[], accountSortField, sortDir));
