@@ -37,6 +37,7 @@ const PAYMENT_KEYS = [
   'payment_min_usd', 'paymongo_min_php', 'paypal_min_usd', 'crypto_min_usd',
 ];
 
+const VOTING_KEYS = ['vote_reward_cooldown_hours', 'vote_reward_coins', 'xtremetop100_site_id'];
 const PAYMONGO_ALERT_RECIPIENTS_KEY = 'paymongo_alert_recipients';
 const READONLY_KEYS = new Set(['crypto_usd_to_credit_rate']);
 
@@ -458,11 +459,68 @@ export default function WebsiteConfigPage() {
           </div>
         </div>
 
+        {/* Voting Settings */}
+        <div className="toa-seal-card" style={{ padding: '2rem', position: 'relative' }}>
+          <div className="toa-seal-corner toa-seal-corner-tl" /><div className="toa-seal-corner toa-seal-corner-tr" />
+          <div style={{ fontFamily: 'var(--toa-font-display)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--toa-gold-bright)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1.5rem' }}>Voting Settings</div>
+          <div className="space-y-6">
+            <div>
+              <label className="toa-label-field">Postback URL <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(read-only — set this on XtremeTop100)</span></label>
+              <input
+                type="text"
+                value="https://taleofasia.com/api/voting/postback"
+                readOnly
+                className="toa-input"
+                style={{ opacity: 0.6, cursor: 'default' }}
+              />
+              <p style={{ fontSize: '0.75rem', color: 'var(--toa-muted)', marginTop: '0.25rem' }}>Configure this URL in your XtremeTop100 control panel under Postback settings.</p>
+            </div>
+            <div>
+              <label className="toa-label-field">XtremeTop100 Site ID</label>
+              <input
+                type="text"
+                value={configs.find(c => c.ConfigKey === 'xtremetop100_site_id')?.ConfigValue || ''}
+                onChange={(e) => handleConfigChange('xtremetop100_site_id', e.target.value)}
+                placeholder="e.g. 1132379076"
+                className="toa-input"
+              />
+              <p style={{ fontSize: '0.75rem', color: 'var(--toa-muted)', marginTop: '0.25rem' }}>Found in your XtremeTop100 control panel URL.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="toa-label-field">Reward Coins per Vote</label>
+                <input
+                  type="number"
+                  value={configs.find(c => c.ConfigKey === 'vote_reward_coins')?.ConfigValue || '5'}
+                  onChange={(e) => handleConfigChange('vote_reward_coins', e.target.value)}
+                  min="1"
+                  className="toa-input"
+                />
+              </div>
+              <div>
+                <label className="toa-label-field">Vote Cooldown (hours)</label>
+                <input
+                  type="number"
+                  value={configs.find(c => c.ConfigKey === 'vote_reward_cooldown_hours')?.ConfigValue || '12'}
+                  onChange={(e) => handleConfigChange('vote_reward_cooldown_hours', e.target.value)}
+                  min="1"
+                  className="toa-input"
+                />
+              </div>
+            </div>
+          </div>
+          <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+            <button onClick={handleSave} disabled={saving} className="toa-btn toa-btn-solid toa-btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', opacity: saving ? 0.5 : 1 }}>
+              {saving ? 'Saving…' : <><Save size={13} />&nbsp;Save</>}
+            </button>
+          </div>
+        </div>
+
         {/* General Website Configs */}
         <div className="toa-panel" style={{ padding: '2rem' }}>
           <div style={{ fontFamily: 'var(--toa-font-display)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--toa-gold-bright)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '1.5rem' }}>General Settings</div>
           <div className="space-y-6">
-            {configs.filter(c => !RECAPTCHA_KEYS.includes(c.ConfigKey) && !EMAIL_KEYS.includes(c.ConfigKey) && !PAYMENT_KEYS.includes(c.ConfigKey) && c.ConfigKey !== PAYMONGO_ALERT_RECIPIENTS_KEY).map((config) => {
+            {configs.filter(c => !RECAPTCHA_KEYS.includes(c.ConfigKey) && !EMAIL_KEYS.includes(c.ConfigKey) && !PAYMENT_KEYS.includes(c.ConfigKey) && !VOTING_KEYS.includes(c.ConfigKey) && c.ConfigKey !== PAYMONGO_ALERT_RECIPIENTS_KEY).map((config) => {
               const isReadOnly = READONLY_KEYS.has(config.ConfigKey);
               return (
               <div key={config.ConfigKey}>

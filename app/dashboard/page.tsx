@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [timePoints, setTimePoints] = useState<number>(0);
   const [coins, setCoins] = useState<number | null>(null);
+  const [voteConfig, setVoteConfig] = useState<{ siteId: string; rewardCoins: number; cooldownHours: number }>({ siteId: '1132379076', rewardCoins: 5, cooldownHours: 12 });
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
@@ -69,6 +70,24 @@ export default function DashboardPage() {
     }
   }, []);
 
+  const fetchVoteConfig = useCallback(async () => {
+    try {
+      const response = await fetch('/api/public/config', { cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.voting) {
+          setVoteConfig({
+            siteId: data.voting.siteId || '1132379076',
+            rewardCoins: data.voting.rewardCoins || 5,
+            cooldownHours: data.voting.cooldownHours || 12,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching vote config:', error);
+    }
+  }, []);
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
@@ -84,6 +103,7 @@ export default function DashboardPage() {
       void fetchVotingLogs();
       void checkAdminStatus();
       void fetchTimePoints();
+      void fetchVoteConfig();
     };
 
     runAll();
@@ -101,7 +121,7 @@ export default function DashboardPage() {
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [status, router, fetchUserData, fetchVotingLogs, checkAdminStatus, fetchTimePoints]);
+  }, [status, router, fetchUserData, fetchVotingLogs, checkAdminStatus, fetchTimePoints, fetchVoteConfig]);
 
   const handleClaimReward = async () => {
     setClaimingReward(true);
@@ -290,12 +310,12 @@ export default function DashboardPage() {
                 Server Vote
               </div>
               <p style={{ fontSize: '0.82rem', color: 'var(--toa-muted)', margin: 0 }}>
-                Vote every 12 hours — earn <span style={{ color: 'var(--toa-gold-bright)' }}>5 Coins</span> per vote.
+                Vote every {voteConfig.cooldownHours} hours — earn <span style={{ color: 'var(--toa-gold-bright)' }}>{voteConfig.rewardCoins} Coins</span> per vote.
               </p>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <a
-                href={`https://www.xtremetop100.com/in.php?site=1132379076&postback=${encodeURIComponent(session?.user?.name || '')}`}
+                href={`https://www.xtremetop100.com/in.php?site=${voteConfig.siteId}&postback=${encodeURIComponent(session?.user?.name || '')}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="toa-btn toa-btn-solid toa-btn-sm"

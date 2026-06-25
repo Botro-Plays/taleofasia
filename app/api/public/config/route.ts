@@ -23,6 +23,9 @@ export async function GET() {
       let recaptchaEnabled = 'false';
       let recaptchaSiteKey = '';
       let recaptchaVersion = 'v2';
+      let voteSiteId = '';
+      let voteRewardCoins = '5';
+      let voteCooldownHours = '12';
       const payments: Record<string, string> = {};
       for (const row of rows) {
         const key = String(row.ConfigKey || '').toLowerCase();
@@ -32,6 +35,9 @@ export async function GET() {
         if (key === 'recaptcha_enabled') recaptchaEnabled = val;
         if (key === 'recaptcha_site_key') recaptchaSiteKey = val;
         if (key === 'recaptcha_version') recaptchaVersion = val;
+        if (key === 'xtremetop100_site_id') voteSiteId = val;
+        if (key === 'vote_reward_coins') voteRewardCoins = val;
+        if (key === 'vote_reward_cooldown_hours') voteCooldownHours = val;
         // Expose payment-related config (no secrets)
         if (key.startsWith('payment_') || key.startsWith('crypto_') || key.startsWith('coin_') || key.startsWith('bonus_') || key.startsWith('paypal_min') || key.startsWith('paymongo_min') || key === 'paymongo_public_key' || key === 'paypal_client_id' || key === 'paypal_sandbox') {
           payments[key] = val;
@@ -80,6 +86,12 @@ export async function GET() {
           enabled: recaptchaEnabled === 'true',
           version: recaptchaVersion as 'v2' | 'v3',
           siteKey: recaptchaSiteKey,
+        },
+        voting: {
+          siteId: voteSiteId,
+          rewardCoins: parseInt(voteRewardCoins || '5', 10) || 5,
+          cooldownHours: parseInt(voteCooldownHours || '12', 10) || 12,
+          postbackUrl: 'https://taleofasia.com/api/voting/postback',
         },
         payments: {
           gcashEnabled: payments.payment_gcash_enabled === 'true',
