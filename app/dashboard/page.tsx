@@ -16,7 +16,8 @@ export default function DashboardPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [timePoints, setTimePoints] = useState<number>(0);
   const [coins, setCoins] = useState<number | null>(null);
-  const [voteConfig, setVoteConfig] = useState<{ siteId: string; rewardCoins: number; cooldownHours: number }>({ siteId: '1132379076', rewardCoins: 5, cooldownHours: 12 });
+  const [voteConfig, setVoteConfig] = useState<{ siteId: string; rewardCoins: number; cooldownHours: number; testingMode: boolean }>({ siteId: '1132379076', rewardCoins: 5, cooldownHours: 12, testingMode: false });
+  const [simulatingVote, setSimulatingVote] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
@@ -80,6 +81,7 @@ export default function DashboardPage() {
             siteId: data.voting.siteId || '1132379076',
             rewardCoins: data.voting.rewardCoins || 5,
             cooldownHours: data.voting.cooldownHours || 12,
+            testingMode: !!data.voting.testingMode,
           });
         }
       }
@@ -146,6 +148,25 @@ export default function DashboardPage() {
       showToast('An error occurred', 'error');
     } finally {
       setClaimingReward(false);
+    }
+  };
+
+  const handleSimulateVote = async () => {
+    setSimulatingVote(true);
+    try {
+      const username = session?.user?.name || session?.user?.id || '';
+      const response = await fetch(`/api/voting/postback?votingip=TEST_SIMULATED&custom=${encodeURIComponent(username)}`);
+      const data = await response.json();
+      if (response.ok) {
+        showToast('Test vote simulated — claim your reward!', 'success');
+        await fetchVotingLogs();
+      } else {
+        showToast(data.error || 'Simulation failed', 'error');
+      }
+    } catch {
+      showToast('An error occurred', 'error');
+    } finally {
+      setSimulatingVote(false);
     }
   };
 
@@ -307,6 +328,12 @@ export default function DashboardPage() {
 
         {/* ── VOTING ── */}
         <div className="toa-label" style={{ marginBottom: '1rem' }}>Vote for Rewards</div>
+        {voteConfig.testingMode && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 0.875rem', background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.3)', borderRadius: '4px', fontSize: '0.75rem', color: 'var(--toa-warning)' }}>
+            <span style={{ fontWeight: 700 }}>⚠ Testing Mode Active</span>
+            <span style={{ color: 'var(--toa-muted)' }}>— Use Simulate Vote to test the full flow without going through XtremeTop100.</span>
+          </div>
+        )}
         <div className="toa-seal-card" style={{ padding: '2rem', marginBottom: '0.75rem', position: 'relative' }}>
           <div className="toa-seal-corner toa-seal-corner-tl" />
           <div className="toa-seal-corner toa-seal-corner-tr" />
@@ -341,6 +368,16 @@ export default function DashboardPage() {
                 <ExternalLink size={13} />
                 Vote Now
               </a>
+              {voteConfig.testingMode && (
+                <button
+                  onClick={handleSimulateVote}
+                  disabled={simulatingVote}
+                  className="toa-btn toa-btn-ghost toa-btn-sm"
+                  style={{ borderColor: 'var(--toa-warning)', color: 'var(--toa-warning)' }}
+                >
+                  {simulatingVote ? 'Simulating…' : '⚡ Simulate Vote'}
+                </button>
+              )}
               <button
                 onClick={handleClaimReward}
                 disabled={claimingReward || !votingLogs.some(log => !log.RewardClaimed)}

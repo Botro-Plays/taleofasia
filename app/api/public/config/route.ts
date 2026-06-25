@@ -26,6 +26,7 @@ export async function GET() {
       let voteSiteId = '';
       let voteRewardCoins = '5';
       let voteCooldownHours = '12';
+      let voteTestingMode = 'false';
       const payments: Record<string, string> = {};
       for (const row of rows) {
         const key = String(row.ConfigKey || '').toLowerCase();
@@ -38,6 +39,7 @@ export async function GET() {
         if (key === 'xtremetop100_site_id') voteSiteId = val;
         if (key === 'vote_reward_coins') voteRewardCoins = val;
         if (key === 'vote_reward_cooldown_hours') voteCooldownHours = val;
+        if (key === 'vote_testing_mode') voteTestingMode = val;
         // Expose payment-related config (no secrets)
         if (key.startsWith('payment_') || key.startsWith('crypto_') || key.startsWith('coin_') || key.startsWith('bonus_') || key.startsWith('paypal_min') || key.startsWith('paymongo_min') || key === 'paymongo_public_key' || key === 'paypal_client_id' || key === 'paypal_sandbox') {
           payments[key] = val;
@@ -92,6 +94,7 @@ export async function GET() {
           rewardCoins: parseInt(voteRewardCoins || '5', 10) || 5,
           cooldownHours: parseInt(voteCooldownHours || '12', 10) || 12,
           postbackUrl: 'https://taleofasia.com/api/voting/postback',
+          testingMode: voteTestingMode === 'true',
         },
         payments: {
           gcashEnabled: payments.payment_gcash_enabled === 'true',
