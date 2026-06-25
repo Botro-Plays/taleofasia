@@ -134,6 +134,20 @@ export default function Home() {
 
       {/* === HERO: Ember particles + decode-in title + command bar === */}
       <section className="toa-hero">
+        {/* Video background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            objectFit: 'cover', objectPosition: 'center', zIndex: 0,
+          }}
+        >
+          <source src="/hero-bg.mp4" type="video/mp4" />
+        </video>
+
         {/* Ember particles */}
         {embers.map(e => (
           <div

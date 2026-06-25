@@ -407,10 +407,6 @@ a:hover { color: var(--toa-gold-bright); }
   position: relative;
   overflow: hidden;
   background: var(--toa-void);
-  background-image: url('/hero-bg.gif');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
 }
 
 /* Dark gradient overlay so text stays readable over the background image */
