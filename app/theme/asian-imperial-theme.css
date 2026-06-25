@@ -590,7 +590,8 @@ a:hover { color: var(--toa-gold-bright); }
     font-size: 0.85rem;
   }
   .toa-hero-cta {
-    margin-top: 1.5rem;
+    margin-top: auto;
+    margin-bottom: 2rem;
   }
   .toa-btn {
     padding: 0.7rem 1.75rem;
