@@ -433,7 +433,7 @@ export default function ItemsPage() {
                       )}
                       {otherSpecs.length > 0 && (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.65rem', color: 'var(--toa-muted)', marginRight: '0.2rem' }}>Other Spec:</span>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--toa-muted)', marginRight: '0.2rem' }}>Other Spec{otherSpecs.length > 1 ? 's' : ''}:</span>
                           {otherSpecs.map((cls) => (
                             <span key={cls} style={{
                               fontSize: '0.7rem',
