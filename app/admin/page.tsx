@@ -9,7 +9,7 @@ import {
   Settings2, Gamepad2, Users, CreditCard, DollarSign,
   Timer, ScrollText, BarChart2, FileText, Zap, Newspaper,
   ChevronLeft, AlertTriangle, CheckCircle, WifiOff, Clock,
-  XCircle, TrendingUp, ShieldAlert, Vote,
+  XCircle, TrendingUp, ShieldAlert, Vote, Package,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -133,6 +133,7 @@ export default function AdminDashboardPage() {
     { Icon: FileText,   title: 'Pages (CMS)',        description: 'Edit public info and download pages',  href: '/admin/pages',          accent: 'var(--toa-gold)' },
     { Icon: Newspaper,  title: 'Launcher News',      description: 'News & patch notes shown in launcher',  href: '/admin/launcher-news',  accent: 'var(--toa-warning)' },
     { Icon: Zap,        title: 'Event Management',   description: 'Create and manage in-game events',     href: '/admin/events',         accent: 'var(--toa-ember)' },
+    { Icon: Package,    title: 'Item Visibility',    description: 'Control which items show on public item list', href: '/admin/items',  accent: 'var(--toa-gold)' },
   ];
 
   const paypalItems = [

@@ -252,7 +252,16 @@ export function DraggableNav({ customPages }: { customPages: Array<{ Slug: strin
       >
         <Link href="/downloads" className={isActive('/downloads') ? 'toa-nav-cta toa-nav-auth' : 'toa-nav-link'}>Download</Link>
         <Link href="/rankings" className={isActive('/rankings') ? 'toa-nav-cta toa-nav-auth' : 'toa-nav-link'}>Rankings</Link>
-        <Link href="/info/getting-started" className={isActive('/info/getting-started') ? 'toa-nav-cta toa-nav-auth' : 'toa-nav-link'}>Guide</Link>
+        <div className="relative group" style={isVertical ? { position: 'relative' } : undefined}>
+          <span className={isActive('/items') || isActive('/info/getting-started') || isActive('/mix-list') ? 'toa-nav-cta toa-nav-auth' : 'toa-nav-link'} style={{ cursor: 'pointer' }}>Guides</span>
+          <div
+            className={`invisible opacity-0 group-hover:visible group-hover:opacity-100 absolute ${isVertical ? 'left-full top-0 ml-2' : 'mt-2 left-0'} w-48 bg-[var(--toa-smoke)] border border-[rgba(184,155,94,0.15)] rounded-lg shadow-lg transition-opacity py-1`}
+          >
+            <Link href="/info/getting-started" className="block px-4 py-2 text-sm text-[var(--toa-muted)] hover:text-[var(--toa-gold-bright)] hover:bg-[rgba(184,155,94,0.06)] transition-colors">Getting Started</Link>
+            <Link href="/items" className="block px-4 py-2 text-sm text-[var(--toa-muted)] hover:text-[var(--toa-gold-bright)] hover:bg-[rgba(184,155,94,0.06)] transition-colors">Item List</Link>
+            <Link href="/mix-list" className="block px-4 py-2 text-sm text-[var(--toa-muted)] hover:text-[var(--toa-gold-bright)] hover:bg-[rgba(184,155,94,0.06)] transition-colors">Mix List</Link>
+          </div>
+        </div>
         <Link href="/info/server-rules" className={isActive('/info/server-rules') ? 'toa-nav-cta toa-nav-auth' : 'toa-nav-link'}>Rules</Link>
         {customPages.length > 0 && (
           <div className="relative group" style={isVertical ? { position: 'relative' } : undefined}>
@@ -270,7 +279,6 @@ export function DraggableNav({ customPages }: { customPages: Array<{ Slug: strin
                 </Link>
               ))}
               <Link href="/info/about" className="block px-4 py-2 text-sm text-[var(--toa-muted)] hover:text-[var(--toa-gold-bright)] hover:bg-[rgba(184,155,94,0.06)] transition-colors">About</Link>
-              <Link href="/mix-list" className="block px-4 py-2 text-sm text-[var(--toa-muted)] hover:text-[var(--toa-gold-bright)] hover:bg-[rgba(184,155,94,0.06)] transition-colors">Mix List</Link>
             </div>
           </div>
         )}

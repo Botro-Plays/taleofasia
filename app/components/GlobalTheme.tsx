@@ -107,7 +107,8 @@ export function GlobalTheme({ children, showNav = true, showFooter = true, showT
           <div className="toa-footer-links">
             <Link href="/downloads">Download</Link>
             <Link href="/rankings">Rankings</Link>
-            <Link href="/info/getting-started">Guide</Link>
+            <Link href="/items">Items</Link>
+            <Link href="/info/getting-started">Guides</Link>
             <Link href="/info/server-rules">Rules</Link>
             <Link href="/privacy-policy">Privacy</Link>
             <Link href="/terms">Terms</Link>
