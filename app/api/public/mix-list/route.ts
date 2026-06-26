@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const data = await cached('public:mix-list', 60_000, async () => {
       const res = await gameDB.query<any>(
-        `SELECT * FROM MixList WHERE TypeMix != 10 ORDER BY TypeMix ASC, ID ASC`
+        `SELECT * FROM MixList WHERE TypeMix != 10 AND NewSheltom14 = 0 AND NewSheltom15 = 0 ORDER BY TypeMix ASC, ID ASC`
       );
       const items = res.recordset || [];
       return { items };
