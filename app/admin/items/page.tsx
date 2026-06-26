@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -101,8 +101,13 @@ export default function AdminItemsPage() {
     })();
   }, [status, router, fetchItems]);
 
+  const hasFetched = useRef(false);
+
   useEffect(() => {
-    if (isAdmin) fetchItems();
+    if (isAdmin && !hasFetched.current) {
+      hasFetched.current = true;
+      fetchItems();
+    }
   }, [isAdmin, fetchItems]);
 
   const toggleVisibility = async (item: AdminItem) => {

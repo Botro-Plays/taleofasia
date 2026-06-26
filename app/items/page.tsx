@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { PageShell } from '@/app/components/PageShell';
 import { Search, X } from 'lucide-react';
 
@@ -109,23 +108,6 @@ interface SubCategory {
   count: number;
 }
 
-const CLASS_MAP: Record<number, string> = {
-  0: 'All',
-  1: 'All',
-  2: 'Pikeman',
-  4: 'Fighter',
-  6: 'Mechanician',
-  8: 'Knight',
-  16: 'Archer',
-  32: 'Atalanta',
-  192: 'Priest',
-  256: 'Magician',
-  512: 'Shaman',
-  2048: 'Assassin',
-  8192: 'All',
-  16384: 'All',
-};
-
 const SPEC_CLASSES = [
   'Fighter', 'Mechanician', 'Archer', 'Pikeman', 'Atalanta',
   'Knight', 'Magician', 'Priestess', 'Assassin', 'Shaman',
@@ -217,8 +199,13 @@ export default function ItemsPage() {
     }
   }, []);
 
+  const hasFetched = useRef(false);
+
   useEffect(() => {
-    fetchItems('weapons', '', '');
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchItems('weapons', '', '');
+    }
   }, [fetchItems]);
 
   const handleMainClick = (main: string) => {

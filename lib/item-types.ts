@@ -32,8 +32,6 @@ export const ITEM_TYPE_MAP: Record<string, ItemTypeMapping> = {
   'CA':  { main: 'costumes',    sub: 'Costumes',   prefix: 'CA' },
 };
 
-const THREE_CHAR_PREFIXES = ['WS1', 'WS2', 'DA1', 'DA2', 'OA1', 'OA2'];
-
 export function getItemType(szLastCategory: string): ItemTypeMapping | null {
   if (!szLastCategory || szLastCategory.length < 3) return null;
   const upper = szLastCategory.toUpperCase();
@@ -121,7 +119,6 @@ export function buildCategorySQL(main: string, sub?: string): { clause: string; 
   const prefixes = getPrefixesForMain(main);
   if (prefixes.length === 0) return { clause: ' AND 1=0', params: {} };
 
-  const placeholders = prefixes.map((_, i) => `@p${i}`);
   const clause = ` AND (${prefixes.map((_, i) => `szLastCategory LIKE @p${i} + '%'`).join(' OR ')})`;
   const params: Record<string, string> = {};
   prefixes.forEach((p, i) => { params[`p${i}`] = p; });

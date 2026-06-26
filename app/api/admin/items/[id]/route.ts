@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { webDB, gameDB } from '@/lib/db';
 import { checkAdminPrivileges } from '@/lib/auth/admin';
-import { buildCategorySQL, MAIN_CATEGORIES } from '@/lib/item-types';
+import { buildCategorySQL } from '@/lib/item-types';
 
 export async function PATCH(req: Request) {
   try {
