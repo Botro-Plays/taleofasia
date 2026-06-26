@@ -81,6 +81,7 @@ interface GameItem {
   iTalent: number;
   iAgility: number;
   iHealth: number;
+  eSpecialization: number;
   JobBitCodeRandom1: number;
   JobBitCodeRandom2: number;
   JobBitCodeRandom3: number;
@@ -114,10 +115,12 @@ const SPEC_CLASSES = [
 ];
 
 function buildSpecInfo(item: GameItem): Array<{ class: string; hasSpec: boolean }> {
-  return SPEC_CLASSES.map((cls, i) => ({
-    class: cls,
-    hasSpec: (item as any)[`JobBitCodeRandom${i + 1}`] > 0,
-  }));
+  return SPEC_CLASSES.map((cls, i) => {
+    const idx = i + 1;
+    const hasJobBit = (item as any)[`JobBitCodeRandom${idx}`] > 0;
+    const isMainSpec = item.eSpecialization === idx;
+    return { class: cls, hasSpec: hasJobBit || isMainSpec };
+  });
 }
 
 function buildStats(item: GameItem): Array<{ label: string; value: string; spec?: boolean }> {

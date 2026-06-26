@@ -43,6 +43,7 @@ const ITEM_QUERY = `
     fSpecBlockRating,
     iSpecAttackRange,
     iStrength, iSpirit, iTalent, iAgility, iHealth,
+    eSpecialization,
     JobBitCodeRandom1, JobBitCodeRandom2, JobBitCodeRandom3,
     JobBitCodeRandom4, JobBitCodeRandom5, JobBitCodeRandom6,
     JobBitCodeRandom7, JobBitCodeRandom8, JobBitCodeRandom9,
