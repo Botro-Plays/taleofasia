@@ -114,13 +114,18 @@ const SPEC_CLASSES = [
   'Knight', 'Magician', 'Priestess', 'Assassin', 'Shaman',
 ];
 
-function buildSpecInfo(item: GameItem): Array<{ class: string; hasSpec: boolean }> {
-  return SPEC_CLASSES.map((cls, i) => {
+function buildSpecInfo(item: GameItem): { mainSpec: string | null; otherSpecs: string[] } {
+  const mainSpec = item.eSpecialization > 0 && item.eSpecialization <= SPEC_CLASSES.length
+    ? SPEC_CLASSES[item.eSpecialization - 1]
+    : null;
+  const otherSpecs: string[] = [];
+  for (let i = 0; i < SPEC_CLASSES.length; i++) {
     const idx = i + 1;
-    const hasJobBit = (item as any)[`JobBitCodeRandom${idx}`] > 0;
-    const isMainSpec = item.eSpecialization === idx;
-    return { class: cls, hasSpec: hasJobBit || isMainSpec };
-  });
+    if ((item as any)[`JobBitCodeRandom${idx}`] > 0) {
+      otherSpecs.push(SPEC_CLASSES[i]);
+    }
+  }
+  return { mainSpec, otherSpecs };
 }
 
 function buildStats(item: GameItem): Array<{ label: string; value: string; spec?: boolean }> {
@@ -331,7 +336,8 @@ export default function ItemsPage() {
           }}>
             {items.map((item) => {
               const stats = buildStats(item);
-              const specInfo = buildSpecInfo(item);
+              const { mainSpec, otherSpecs } = buildSpecInfo(item);
+              const hasAnySpec = mainSpec || otherSpecs.length > 0;
               return (
                 <div
                   key={`${item.sItemID}-${item.szLastCategory}`}
@@ -406,21 +412,43 @@ export default function ItemsPage() {
                   </div>
 
                   {/* Spec class info */}
-                  {specInfo.some(s => s.hasSpec) ? (
-                    <div style={{ marginTop: '0.75rem', display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                      {specInfo.filter(s => s.hasSpec).map((s) => (
-                        <span key={s.class} style={{
-                          fontSize: '0.7rem',
-                          padding: '0.15rem 0.4rem',
-                          borderRadius: '3px',
-                          background: 'rgba(184,155,94,0.1)',
-                          color: '#b8a55e',
-                          border: '1px solid rgba(184,155,94,0.2)',
-                          whiteSpace: 'nowrap',
-                        }}>
-                          {s.class} Spec
-                        </span>
-                      ))}
+                  {hasAnySpec ? (
+                    <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                      {mainSpec && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--toa-muted)', marginRight: '0.2rem' }}>Main Spec:</span>
+                          <span style={{
+                            fontSize: '0.7rem',
+                            padding: '0.15rem 0.4rem',
+                            borderRadius: '3px',
+                            background: 'rgba(184,155,94,0.15)',
+                            color: '#d4b96a',
+                            border: '1px solid rgba(184,155,94,0.3)',
+                            whiteSpace: 'nowrap',
+                            fontWeight: 700,
+                          }}>
+                            {mainSpec} Spec
+                          </span>
+                        </div>
+                      )}
+                      {otherSpecs.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.65rem', color: 'var(--toa-muted)', marginRight: '0.2rem' }}>Other Spec:</span>
+                          {otherSpecs.map((cls) => (
+                            <span key={cls} style={{
+                              fontSize: '0.7rem',
+                              padding: '0.15rem 0.4rem',
+                              borderRadius: '3px',
+                              background: 'rgba(184,155,94,0.08)',
+                              color: '#b8a55e',
+                              border: '1px solid rgba(184,155,94,0.15)',
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {cls} Spec
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div style={{ marginTop: '0.75rem' }}>
