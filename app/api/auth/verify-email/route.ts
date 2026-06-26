@@ -47,10 +47,10 @@ export async function GET(request: NextRequest) {
 
     const username = row.AccountName;
 
-    // Activate the account (Flag = 98 means activated)
+    // Activate the account (Flag = 98 means activated, ActiveCode = 0 clears verification hash)
     await userDB.query(`
       UPDATE UserInfo
-      SET Active = '1', Flag = '98'
+      SET Active = '1', Flag = '98', ActiveCode = '0'
       WHERE AccountName = @username
     `, { username });
 

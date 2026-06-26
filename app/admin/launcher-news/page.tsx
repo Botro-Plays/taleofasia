@@ -52,6 +52,8 @@ export default function AdminLauncherNews() {
   const [info, setInfo] = useState('');
   const [patchVersion, setPatchVersion] = useState('');
   const [patchEntries, setPatchEntries] = useState<{ version: string; file: string }[]>([]);
+  const [newPatchVersion, setNewPatchVersion] = useState('');
+  const [newPatchFile, setNewPatchFile] = useState('');
   const [versionSaving, setVersionSaving] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
@@ -220,39 +222,86 @@ export default function AdminLauncherNews() {
           <div style={{ fontSize: '0.75rem', color: 'var(--toa-muted)', marginBottom: '0.5rem' }}>
             Update entries in <span style={{ fontFamily: 'monospace', color: 'var(--toa-gold)' }}>updateContents.xml</span>:
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {patchEntries.map((entry, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+
+          {/* Existing patch entries (read-only with delete) */}
+          {patchEntries.length > 0 && (
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--toa-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Existing Patches ({patchEntries.length})
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {patchEntries.map((entry, i) => (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.4rem 0.6rem',
+                    background: 'rgba(12,10,18,0.5)',
+                    borderRadius: '0.375rem',
+                    border: '1px solid rgba(184,155,94,0.08)',
+                  }}>
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--toa-gold)', minWidth: '5rem' }}>{entry.version}</span>
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--toa-bone)' }}>{entry.file}</span>
+                    <button
+                      onClick={() => setPatchEntries(patchEntries.filter((_, j) => j !== i))}
+                      className="toa-btn toa-btn-ghost toa-btn-sm"
+                      style={{ color: 'var(--toa-danger)', marginLeft: 'auto', padding: '0.2rem 0.4rem' }}
+                      title="Remove this patch entry"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Add New Patch form */}
+          <div style={{
+            padding: '0.75rem',
+            background: 'rgba(184,155,94,0.04)',
+            borderRadius: '0.375rem',
+            border: '1px dashed rgba(184,155,94,0.2)',
+          }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--toa-muted)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Add New Patch
+            </div>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div>
+                <label className="toa-label-field" style={{ fontSize: '0.7rem' }}>Version</label>
                 <input
-                  value={entry.version}
-                  onChange={(e) => setPatchEntries(patchEntries.map((p, j) => j === i ? { ...p, version: e.target.value } : p))}
-                  placeholder="version"
+                  value={newPatchVersion}
+                  onChange={(e) => setNewPatchVersion(e.target.value)}
+                  placeholder="e.g. 1002"
                   className="toa-input"
                   style={{ width: '8rem' }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && newPatchVersion.trim() && newPatchFile.trim()) { setPatchEntries([...patchEntries, { version: newPatchVersion.trim(), file: newPatchFile.trim() }]); setNewPatchVersion(''); setNewPatchFile(''); } }}
                 />
+              </div>
+              <div>
+                <label className="toa-label-field" style={{ fontSize: '0.7rem' }}>File</label>
                 <input
-                  value={entry.file}
-                  onChange={(e) => setPatchEntries(patchEntries.map((p, j) => j === i ? { ...p, file: e.target.value } : p))}
-                  placeholder="file.zip"
+                  value={newPatchFile}
+                  onChange={(e) => setNewPatchFile(e.target.value)}
+                  placeholder="e.g. 1002.zip"
                   className="toa-input"
                   style={{ width: '12rem' }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && newPatchVersion.trim() && newPatchFile.trim()) { setPatchEntries([...patchEntries, { version: newPatchVersion.trim(), file: newPatchFile.trim() }]); setNewPatchVersion(''); setNewPatchFile(''); } }}
                 />
-                <button
-                  onClick={() => setPatchEntries(patchEntries.filter((_, j) => j !== i))}
-                  className="toa-btn toa-btn-ghost toa-btn-sm"
-                  style={{ color: 'var(--toa-danger)' }}
-                >
-                  <Trash2 size={12} />
-                </button>
               </div>
-            ))}
-            <button
-              onClick={() => setPatchEntries([...patchEntries, { version: '', file: '' }])}
-              className="toa-btn toa-btn-ghost toa-btn-sm"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', width: 'fit-content' }}
-            >
-              <Plus size={13} />&nbsp;Add Patch Entry
-            </button>
+              <button
+                onClick={() => {
+                  if (newPatchVersion.trim() && newPatchFile.trim()) {
+                    setPatchEntries([...patchEntries, { version: newPatchVersion.trim(), file: newPatchFile.trim() }]);
+                    setNewPatchVersion('');
+                    setNewPatchFile('');
+                  }
+                }}
+                disabled={!newPatchVersion.trim() || !newPatchFile.trim()}
+                className="toa-btn toa-btn-ghost toa-btn-sm"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', opacity: (!newPatchVersion.trim() || !newPatchFile.trim()) ? 0.5 : 1 }}
+              >
+                <Plus size={13} />&nbsp;Add to List
+              </button>
+            </div>
           </div>
         </div>
 
