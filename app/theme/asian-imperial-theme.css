@@ -1603,6 +1603,10 @@ a:hover { color: var(--toa-gold-bright); }
 .toa-auth-input::placeholder { color: rgba(107, 101, 119, 0.4); }
 .toa-auth-input:focus { border-bottom-color: var(--toa-gold); }
 
+/* Hide browser-native password reveal/clear buttons (Edge, IE) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear { display: none; }
+
 /* Error */
 .toa-auth-error {
   background: rgba(179, 58, 58, 0.08);
