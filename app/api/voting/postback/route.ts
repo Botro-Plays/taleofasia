@@ -1,36 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { webDB, userDB } from '@/lib/db';
 import { invalidate } from '@/lib/cache';
-import { resolve4, resolve6 } from 'dns';
-import { promisify } from 'util';
-
-const resolve4Async = promisify(resolve4);
-const resolve6Async = promisify(resolve6);
-
-// Cache resolved IPs for 5 minutes to avoid DNS lookup on every request
-let cachedIps: Set<string> | null = null;
-let cacheTime = 0;
-const CACHE_TTL = 5 * 60 * 1000;
-
-async function getXtremeTop100Ips(): Promise<Set<string>> {
-  if (cachedIps && Date.now() - cacheTime < CACHE_TTL) {
-    return cachedIps;
-  }
-
-  const ips = new Set<string>();
-  try {
-    const ipv4s = await resolve4Async('xtremetop100.com');
-    ipv4s.forEach(ip => ips.add(ip));
-  } catch {}
-  try {
-    const ipv6s = await resolve6Async('xtremetop100.com');
-    ipv6s.forEach(ip => ips.add(ip));
-  } catch {}
-
-  cachedIps = ips;
-  cacheTime = Date.now();
-  return ips;
-}
 
 function getClientIP(request: NextRequest): string | null {
   const cfConnecting = request.headers.get('cf-connecting-ip');
@@ -46,25 +16,15 @@ function getClientIP(request: NextRequest): string | null {
 }
 
 export async function GET(request: NextRequest) {
+  const clientIP = getClientIP(request);
+  console.log(`[postback] Incoming request from server IP: ${clientIP || 'unknown'} params: ${request.nextUrl.search}`);
+
   try {
     // Check if testing mode is enabled
     const testingModeResult = await webDB.query(`
       SELECT ConfigValue FROM WebsiteConfigs WHERE ConfigKey = 'vote_testing_mode'
     `);
     const testingMode = testingModeResult.recordset[0]?.ConfigValue === 'true';
-
-    const clientIP = getClientIP(request);
-
-    if (!testingMode) {
-      const allowedIps = await getXtremeTop100Ips();
-      if (!clientIP || !allowedIps.has(clientIP)) {
-        console.warn(`[postback] Rejected request from IP: ${clientIP || 'unknown'} (allowed: ${[...allowedIps].join(', ')})`);
-        return NextResponse.json(
-          { error: 'Forbidden' },
-          { status: 403 }
-        );
-      }
-    }
 
     const searchParams = request.nextUrl.searchParams;
     const votingIp = searchParams.get('votingip');
