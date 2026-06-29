@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 import { GlobalTheme } from '@/app/components/GlobalTheme';
 import ReCaptcha, { type ReCaptchaRef } from '@/app/components/ReCaptcha';
 
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const { status } = useSession();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [recaptchaEnabled, setRecaptchaEnabled] = useState(false);
@@ -120,7 +122,12 @@ export default function LoginPage() {
 
                 <div className="toa-auth-field">
                   <label htmlFor="password" className="toa-auth-label">Password</label>
-                  <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} className="toa-auth-input" placeholder="••••••••" />
+                  <div style={{ position: 'relative' }}>
+                    <input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required minLength={8} className="toa-auth-input" placeholder="••••••••" style={{ paddingRight: '2rem' }} />
+                    <button type="button" onClick={() => setShowPassword(v => !v)} tabIndex={-1} style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--toa-muted)', padding: '0.25rem', lineHeight: 0 }} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
 
                 {recaptchaEnabled && recaptchaSiteKey && (

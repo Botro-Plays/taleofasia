@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 import { GlobalTheme } from '@/app/components/GlobalTheme';
 import ReCaptcha, { type ReCaptchaRef } from '@/app/components/ReCaptcha';
 
@@ -39,6 +40,8 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -190,12 +193,22 @@ export default function RegisterPage() {
 
                 <div className="toa-auth-field">
                   <label htmlFor="password" className="toa-auth-label">Password</label>
-                  <input id="password" name="password" type="password" value={formData.password} onChange={handleChange} required minLength={8} className="toa-auth-input" placeholder="Min 8 characters" />
+                  <div style={{ position: 'relative' }}>
+                    <input id="password" name="password" type={showPassword ? 'text' : 'password'} value={formData.password} onChange={handleChange} required minLength={8} className="toa-auth-input" placeholder="Min 8 characters" style={{ paddingRight: '2rem' }} />
+                    <button type="button" onClick={() => setShowPassword(v => !v)} tabIndex={-1} style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--toa-muted)', padding: '0.25rem', lineHeight: 0 }} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="toa-auth-field">
                   <label htmlFor="confirmPassword" className="toa-auth-label">Confirm Password</label>
-                  <input id="confirmPassword" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} required minLength={8} className="toa-auth-input" placeholder="Repeat your password" />
+                  <div style={{ position: 'relative' }}>
+                    <input id="confirmPassword" name="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} value={formData.confirmPassword} onChange={handleChange} required minLength={8} className="toa-auth-input" placeholder="Repeat your password" style={{ paddingRight: '2rem' }} />
+                    <button type="button" onClick={() => setShowConfirmPassword(v => !v)} tabIndex={-1} style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--toa-muted)', padding: '0.25rem', lineHeight: 0 }} aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
 
                 {recaptchaEnabled && recaptchaSiteKey && (
