@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { GlobalTheme } from '@/app/components/GlobalTheme';
-import { Gem, Clock, Users, Sword, CreditCard, KeyRound, Shield, ExternalLink, ChevronRight, CheckCircle, XCircle, User, Gift, ShoppingBag } from 'lucide-react';
+import { Gem, Clock, Users, Sword, CreditCard, KeyRound, Shield, ChevronRight, CheckCircle, XCircle, User, Gift, ShoppingBag } from 'lucide-react';
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -18,7 +18,8 @@ export default function DashboardPage() {
   const [coins, setCoins] = useState<number | null>(null);
   const [voteConfig, setVoteConfig] = useState<{ siteId: string; rewardVP: number; cooldownHours: number; testingMode: boolean }>({ siteId: '1132379076', rewardVP: 5, cooldownHours: 12, testingMode: false });
   const [votePoints, setVotePoints] = useState(0);
-  const [simulatingVote, setSimulatingVote] = useState(false);
+  const [countdown, setCountdown] = useState('');
+  const [inCooldown, setInCooldown] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
@@ -104,6 +105,24 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    const lastVote = votingLogs.length > 0 ? new Date(votingLogs[0].VoteTime).getTime() : null;
+    if (!lastVote) { setInCooldown(false); setCountdown(''); return; }
+    const nextAt = lastVote + voteConfig.cooldownHours * 3600 * 1000;
+    const tick = () => {
+      const remaining = nextAt - Date.now();
+      if (remaining <= 0) { setInCooldown(false); setCountdown(''); return; }
+      setInCooldown(true);
+      const h = Math.floor(remaining / 3600000);
+      const m = Math.floor((remaining % 3600000) / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      setCountdown(`${h}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [votingLogs, voteConfig.cooldownHours]);
+
+  useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
       return undefined;
@@ -165,25 +184,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleSimulateVote = async () => {
-    setSimulatingVote(true);
-    try {
-      const username = session?.user?.name || session?.user?.id || '';
-      const response = await fetch(`/api/voting/postback?votingip=TEST_SIMULATED&custom=${encodeURIComponent(username)}`);
-      const data = await response.json();
-      if (response.ok) {
-        showToast('Test vote simulated — claim your reward!', 'success');
-        await fetchVotingLogs();
-      } else {
-        showToast(data.error || 'Simulation failed', 'error');
-      }
-    } catch {
-      showToast('An error occurred', 'error');
-    } finally {
-      setSimulatingVote(false);
-    }
-  };
-
   if (status === 'loading') {
     return (
       <GlobalTheme>
@@ -194,6 +194,8 @@ export default function DashboardPage() {
     );
   }
 
+  const unclaimedCount = votingLogs.filter(log => !log.RewardClaimed).length;
+  const unclaimedVP = unclaimedCount * voteConfig.rewardVP;
   const displayCoins = Number((typeof coins === 'number' ? coins : session?.user?.coins || 0) ?? 0);
 
   return (
@@ -361,112 +363,54 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* ── VOTING ── */}
-        <div className="toa-label" style={{ marginBottom: '1rem' }}>Vote for Rewards</div>
-        {isAdmin && voteConfig.testingMode && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', padding: '0.5rem 0.875rem', background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.3)', borderRadius: '4px', fontSize: '0.75rem', color: 'var(--toa-warning)' }}>
-            <span style={{ fontWeight: 700 }}>⚠ Testing Mode Active</span>
-            <span style={{ color: 'var(--toa-muted)' }}>— Use Simulate Vote to test the full flow without going through XtremeTop100.</span>
-          </div>
-        )}
-        <div className="toa-seal-card" style={{ padding: '2rem', marginBottom: '0.75rem', position: 'relative' }}>
+        {/* ── VOTE PROMO CARD ── */}
+        <div className="toa-label" style={{ marginBottom: '1rem' }}>Support the Server</div>
+        <div className="toa-seal-card" style={{ padding: '2rem', marginBottom: '3rem', position: 'relative', overflow: 'hidden' }}>
           <div className="toa-seal-corner toa-seal-corner-tl" />
           <div className="toa-seal-corner toa-seal-corner-tr" />
           <div className="toa-seal-corner toa-seal-corner-bl" />
           <div className="toa-seal-corner toa-seal-corner-br" />
+          <ShoppingBag size={110} style={{ position: 'absolute', right: '-0.5rem', bottom: '-1rem', color: 'var(--toa-gold)', opacity: 0.04, pointerEvents: 'none' }} />
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
-            <div>
-              <div style={{ fontFamily: 'var(--toa-font-display)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--toa-gold-bright)', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                Server Vote
-                {votingLogs.filter(log => !log.RewardClaimed).length > 0 && (() => {
-                  const unclaimed = votingLogs.filter(log => !log.RewardClaimed).length;
-                  const totalVP = unclaimed * voteConfig.rewardVP;
-                  return (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', fontWeight: 600, color: 'var(--toa-success)', background: 'rgba(34,197,94,0.12)', padding: '0.15rem 0.5rem', borderRadius: '9999px', border: '1px solid rgba(34,197,94,0.25)', textTransform: 'none', letterSpacing: 0 }}>
-                      <Gift size={11} /> {totalVP} VP ready{unclaimed > 1 ? ` (${unclaimed} votes)` : ''}
-                    </span>
-                  );
-                })()}
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <div style={{ fontFamily: 'var(--toa-font-display)', fontWeight: 700, fontSize: '1.15rem', color: 'var(--toa-gold-bright)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                Vote · Earn · Shop
+                {unclaimedCount > 0 && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', fontWeight: 600, color: 'var(--toa-success)', background: 'rgba(34,197,94,0.12)', padding: '0.15rem 0.5rem', borderRadius: '9999px', border: '1px solid rgba(34,197,94,0.25)', textTransform: 'none', letterSpacing: 0 }}>
+                    <Gift size={11} /> {unclaimedVP} VP ready
+                  </span>
+                )}
               </div>
-              <p style={{ fontSize: '0.82rem', color: 'var(--toa-muted)', margin: 0 }}>
-                Vote every {voteConfig.cooldownHours} hours — earn <span style={{ color: 'var(--toa-gold-bright)' }}>{voteConfig.rewardVP} VP</span> per vote.
+              <p style={{ fontSize: '0.83rem', color: 'var(--toa-muted)', margin: '0 0 0.75rem', lineHeight: '1.55' }}>
+                Vote for the server every <strong style={{ color: 'var(--toa-bone)' }}>{voteConfig.cooldownHours}h</strong> and earn <strong style={{ color: 'var(--toa-gold-bright)' }}>{voteConfig.rewardVP} Vote Points</strong> per vote — spend them on premium &amp; event items in the Vote Shop!
               </p>
+              {inCooldown ? (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--toa-muted)', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--toa-border)', padding: '0.3rem 0.7rem' }}>
+                  <Clock size={13} /> Next vote in <span style={{ fontFamily: 'monospace', color: 'var(--toa-bone)', fontWeight: 700, marginLeft: '0.25rem' }}>{countdown}</span>
+                </div>
+              ) : votingLogs.length > 0 ? (
+                <div style={{ fontSize: '0.78rem', color: 'var(--toa-success)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <CheckCircle size={13} /> Ready to vote now!
+                </div>
+              ) : null}
             </div>
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <a
-                href={`https://www.xtremetop100.com/in.php?site=${voteConfig.siteId}&postback=${encodeURIComponent(session?.user?.name || '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="toa-btn toa-btn-solid toa-btn-sm"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
-                onClick={() => {
-                  document.cookie = 'toa_vote_return=1; max-age=3600; path=/; SameSite=Lax';
-                }}
-              >
-                <ExternalLink size={13} />
-                Vote Now
-              </a>
-              {isAdmin && voteConfig.testingMode && (
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <Link href="/shop" className="toa-btn toa-btn-solid toa-btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                <ShoppingBag size={13} /> Vote Shop
+              </Link>
+              {unclaimedCount > 0 && (
                 <button
-                  onClick={handleSimulateVote}
-                  disabled={simulatingVote}
+                  onClick={handleClaimReward}
+                  disabled={claimingReward}
                   className="toa-btn toa-btn-ghost toa-btn-sm"
-                  style={{ borderColor: 'var(--toa-warning)', color: 'var(--toa-warning)' }}
+                  style={{ borderColor: 'var(--toa-success)', color: 'var(--toa-success)' }}
                 >
-                  {simulatingVote ? 'Simulating…' : '⚡ Simulate Vote'}
+                  {claimingReward ? 'Claiming…' : `Claim ${unclaimedVP} VP`}
                 </button>
               )}
-              <button
-                onClick={handleClaimReward}
-                disabled={claimingReward || !votingLogs.some(log => !log.RewardClaimed)}
-                className="toa-btn toa-btn-ghost toa-btn-sm"
-                style={votingLogs.some(log => !log.RewardClaimed) ? { borderColor: 'var(--toa-success)', color: 'var(--toa-success)' } : {}}
-              >
-                {claimingReward ? 'Claiming…' : 'Claim Reward'}
-              </button>
             </div>
           </div>
         </div>
-
-        {/* ── VOTING HISTORY ── */}
-        {votingLogs.length > 0 && (
-          <div style={{ background: 'var(--toa-smoke)', border: '1px solid rgba(184,155,94,0.1)', marginBottom: '3rem' }}>
-            {votingLogs.slice(0, 5).map((log, i) => (
-              <div
-                key={log.LogID}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '0.875rem 1.25rem', fontSize: '0.82rem',
-                  borderBottom: i < Math.min(votingLogs.length, 5) - 1 ? '1px solid rgba(184,155,94,0.07)' : 'none',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ color: 'var(--toa-bone)' }}>
-                    {new Date(log.VoteTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                    <span style={{ color: 'var(--toa-muted)', marginLeft: '0.75rem' }}>
-                      {new Date(log.VoteTime).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </span>
-                  {log.RewardClaimed ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', color: 'var(--toa-muted)', background: 'rgba(107,101,119,0.15)', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>
-                      <CheckCircle size={10} /> Claimed
-                    </span>
-                  ) : (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.7rem', fontWeight: 600, color: 'var(--toa-success)', background: 'rgba(34,197,94,0.12)', padding: '0.1rem 0.4rem', borderRadius: '9999px', border: '1px solid rgba(34,197,94,0.2)' }}>
-                      <Gift size={10} /> Claimable
-                    </span>
-                  )}
-                </div>
-                <span style={{ color: 'var(--toa-muted)', fontFamily: 'monospace', fontSize: '0.75rem' }}>{log.IP}</span>
-              </div>
-            ))}
-          </div>
-        )}
-        {votingLogs.length === 0 && (
-          <div style={{ marginBottom: '3rem', padding: '2rem', textAlign: 'center', color: 'var(--toa-muted)', fontSize: '0.85rem', background: 'var(--toa-smoke)', border: '1px solid rgba(184,155,94,0.08)' }}>
-            No votes recorded yet
-          </div>
-        )}
 
       </div>
     </GlobalTheme>

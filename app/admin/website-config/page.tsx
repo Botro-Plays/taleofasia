@@ -37,7 +37,7 @@ const PAYMENT_KEYS = [
   'payment_min_usd', 'paymongo_min_php', 'paypal_min_usd', 'crypto_min_usd',
 ];
 
-const VOTING_KEYS = ['vote_reward_cooldown_hours', 'vote_reward_coins', 'xtremetop100_site_id', 'vote_testing_mode'];
+const VOTING_KEYS = ['vote_reward_cooldown_hours', 'vote_reward_coins', 'vote_reward_vp', 'xtremetop100_site_id', 'vote_testing_mode'];
 const PAYMONGO_ALERT_RECIPIENTS_KEY = 'paymongo_alert_recipients';
 const READONLY_KEYS = new Set(['crypto_usd_to_credit_rate']);
 
@@ -484,7 +484,7 @@ export default function WebsiteConfigPage() {
                 className="toa-input"
                 style={{ opacity: 0.6, cursor: 'default' }}
               />
-              <p style={{ fontSize: '0.75rem', color: 'var(--toa-muted)', marginTop: '0.25rem' }}>Logged-in users who click your listing on XtremeTop100 will be sent to /dashboard; guests will go to the landing page.</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--toa-muted)', marginTop: '0.25rem' }}>Logged-in users who click your XtremeTop100 listing will be sent to /shop; guests go to the landing page.</p>
             </div>
             <div>
               <label className="toa-label-field">XtremeTop100 Site ID</label>
@@ -499,14 +499,15 @@ export default function WebsiteConfigPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="toa-label-field">Reward Coins per Vote</label>
+                <label className="toa-label-field">Vote Points (VP) per Vote</label>
                 <input
                   type="number"
-                  value={configs.find(c => c.ConfigKey === 'vote_reward_coins')?.ConfigValue || '5'}
-                  onChange={(e) => handleConfigChange('vote_reward_coins', e.target.value)}
+                  value={configs.find(c => c.ConfigKey === 'vote_reward_vp')?.ConfigValue || '5'}
+                  onChange={(e) => handleConfigChange('vote_reward_vp', e.target.value)}
                   min="1"
                   className="toa-input"
                 />
+                <p style={{ fontSize: '0.75rem', color: 'var(--toa-muted)', marginTop: '0.25rem' }}>VP awarded per vote. Spent in the Vote Shop (no coins are awarded).</p>
               </div>
               <div>
                 <label className="toa-label-field">Vote Cooldown (hours)</label>

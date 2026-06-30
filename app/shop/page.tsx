@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { PageShell } from '@/app/components/PageShell';
-import { Gem, ShoppingCart, AlertCircle, CheckCircle, ExternalLink, Gift } from 'lucide-react';
+import { Gem, ShoppingCart, AlertCircle, CheckCircle, ExternalLink, Gift, Clock } from 'lucide-react';
 
 interface ShopItem {
   shopItemId: number;
@@ -41,10 +41,14 @@ export default function ShopPage() {
   const [votePoints, setVotePoints] = useState(0);
   const [purchasing, setPurchasing] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [voteConfig, setVoteConfig] = useState<{ siteId: string; rewardVP: number; cooldownHours: number }>({ siteId: '1132379076', rewardVP: 5, cooldownHours: 12 });
+  const [voteConfig, setVoteConfig] = useState<{ siteId: string; rewardVP: number; cooldownHours: number; testingMode: boolean }>({ siteId: '1132379076', rewardVP: 5, cooldownHours: 12, testingMode: false });
   const [votingLogs, setVotingLogs] = useState<VoteLog[]>([]);
   const [claimingReward, setClaimingReward] = useState(false);
   const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [simulatingVote, setSimulatingVote] = useState(false);
+  const [countdown, setCountdown] = useState('');
+  const [inCooldown, setInCooldown] = useState(false);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -86,6 +90,7 @@ export default function ShopPage() {
             siteId: data.voting.siteId || '1132379076',
             rewardVP: data.voting.rewardVP || 5,
             cooldownHours: data.voting.cooldownHours || 12,
+            testingMode: !!data.voting.testingMode,
           });
         }
       }
@@ -108,6 +113,32 @@ export default function ShopPage() {
     } catch { /* ignore */ }
   }, [status]);
 
+  const checkAdmin = useCallback(async () => {
+    if (status !== 'authenticated') return;
+    try {
+      const res = await fetch('/api/admin/check', { cache: 'no-store' });
+      if (res.ok) { const d = await res.json(); setIsAdmin(!!d.isAdmin); }
+    } catch { /* ignore */ }
+  }, [status]);
+
+  useEffect(() => {
+    const lastVote = votingLogs.length > 0 ? new Date(votingLogs[0].VoteTime).getTime() : null;
+    if (!lastVote) { setInCooldown(false); setCountdown(''); return; }
+    const nextAt = lastVote + voteConfig.cooldownHours * 3600 * 1000;
+    const tick = () => {
+      const remaining = nextAt - Date.now();
+      if (remaining <= 0) { setInCooldown(false); setCountdown(''); return; }
+      setInCooldown(true);
+      const h = Math.floor(remaining / 3600000);
+      const m = Math.floor((remaining % 3600000) / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      setCountdown(`${h}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [votingLogs, voteConfig.cooldownHours]);
+
   useEffect(() => {
     const id = setTimeout(() => {
       fetchItems();
@@ -116,10 +147,11 @@ export default function ShopPage() {
         fetchVP();
         fetchVotingLogs();
         fetchPurchases();
+        checkAdmin();
       }
     }, 0);
     return () => clearTimeout(id);
-  }, [fetchItems, fetchVP, fetchConfig, fetchVotingLogs, fetchPurchases, status]);
+  }, [fetchItems, fetchVP, fetchConfig, fetchVotingLogs, fetchPurchases, checkAdmin, status]);
 
   // Real-time updates: poll every 30s and refresh on tab focus
   useEffect(() => {
@@ -146,6 +178,25 @@ export default function ShopPage() {
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [fetchItems, fetchVP, fetchVotingLogs, status]);
+
+  const handleSimulateVote = async () => {
+    setSimulatingVote(true);
+    try {
+      const username = session?.user?.name || '';
+      const res = await fetch(`/api/voting/postback?votingip=TEST_SIMULATED&custom=${encodeURIComponent(username)}`);
+      const data = await res.json();
+      if (res.ok) {
+        showToast('Test vote recorded — click Claim Reward to earn your VP!', 'success');
+        void fetchVotingLogs();
+      } else {
+        showToast(data.error || 'Simulation failed', 'error');
+      }
+    } catch {
+      showToast('An error occurred', 'error');
+    } finally {
+      setSimulatingVote(false);
+    }
+  };
 
   const handleClaimReward = async () => {
     setClaimingReward(true);
@@ -327,21 +378,30 @@ export default function ShopPage() {
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--toa-muted)' }}>
                   Vote every {voteConfig.cooldownHours}h — earn <span style={{ color: 'var(--toa-gold-bright)' }}>{voteConfig.rewardVP} VP</span> per vote
+                  {!inCooldown && votingLogs.length > 0 && (
+                    <span style={{ marginLeft: '0.5rem', color: 'var(--toa-success)', fontSize: '0.7rem' }}>✓ Ready!</span>
+                  )}
                 </div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <a
-                href={`https://www.xtremetop100.com/in.php?site=${voteConfig.siteId}&postback=${encodeURIComponent(session?.user?.name || '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="toa-btn toa-btn-solid toa-btn-sm"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
-                onClick={() => { document.cookie = 'toa_vote_return=1; max-age=3600; path=/; SameSite=Lax'; }}
-              >
-                <ExternalLink size={13} />
-                Vote Now
-              </a>
+              {inCooldown ? (
+                <span className="toa-btn toa-btn-ghost toa-btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', opacity: 0.6, cursor: 'not-allowed', fontFamily: 'monospace' }}>
+                  <Clock size={13} /> {countdown}
+                </span>
+              ) : (
+                <a
+                  href={`https://www.xtremetop100.com/in.php?site=${voteConfig.siteId}&postback=${encodeURIComponent(session?.user?.name || '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="toa-btn toa-btn-solid toa-btn-sm"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                  onClick={() => { document.cookie = 'toa_vote_return=1; max-age=3600; path=/; SameSite=Lax'; }}
+                >
+                  <ExternalLink size={13} />
+                  Vote Now
+                </a>
+              )}
               <button
                 onClick={handleClaimReward}
                 disabled={claimingReward || unclaimedCount === 0}
@@ -350,6 +410,16 @@ export default function ShopPage() {
               >
                 {claimingReward ? 'Claiming…' : 'Claim Reward'}
               </button>
+              {isAdmin && voteConfig.testingMode && (
+                <button
+                  onClick={handleSimulateVote}
+                  disabled={simulatingVote}
+                  className="toa-btn toa-btn-ghost toa-btn-sm"
+                  style={{ borderColor: 'var(--toa-warning)', color: 'var(--toa-warning)' }}
+                >
+                  {simulatingVote ? 'Simulating…' : '⚡ Simulate Vote'}
+                </button>
+              )}
             </div>
           </div>
         </div>
