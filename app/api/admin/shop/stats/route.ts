@@ -82,3 +82,40 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch shop stats' }, { status: 500 });
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.name) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const priv = await checkAdminPrivileges(session.user.name);
+    if (!priv.isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await request.json();
+    const { action, ids, days } = body;
+
+    if (action === 'delete' && Array.isArray(ids) && ids.length > 0) {
+      const safeIds = (ids as any[]).map(Number).filter(id => Number.isInteger(id) && id > 0);
+      if (!safeIds.length) return NextResponse.json({ error: 'Invalid IDs' }, { status: 400 });
+      const placeholders = safeIds.map((_, i) => `@id${i}`).join(',');
+      const params: Record<string, any> = {};
+      safeIds.forEach((id, i) => { params[`id${i}`] = id; });
+      await webDB.query(`DELETE FROM WebShopPurchases WHERE PurchaseID IN (${placeholders})`, params);
+      return NextResponse.json({ deleted: safeIds.length });
+    }
+
+    if (action === 'purge') {
+      const d = Number(days);
+      if (d > 0) {
+        await webDB.query(`DELETE FROM WebShopPurchases WHERE PurchasedAt < DATEADD(day, -@days, GETDATE())`, { days: d });
+      } else {
+        await webDB.query(`DELETE FROM WebShopPurchases`);
+      }
+      return NextResponse.json({ purged: true });
+    }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+  } catch (error) {
+    console.error('[admin/shop/stats POST]', error);
+    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+  }
+}

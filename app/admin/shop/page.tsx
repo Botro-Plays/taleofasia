@@ -77,6 +77,13 @@ export default function AdminShopPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [purchasePage, setPurchasePage] = useState(1);
   const [purchaseFilter, setPurchaseFilter] = useState<'all' | 'undelivered'>('all');
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [selectedPurchases, setSelectedPurchases] = useState<Record<number, boolean>>({});
+  const [purgeDays, setPurgeDays] = useState(0);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTitle, setConfirmTitle] = useState('');
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
 
   const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });
@@ -100,7 +107,7 @@ export default function AdminShopPage() {
       const params = new URLSearchParams({ page: String(page), pageSize: '50', filter });
       const res = await fetch(`/api/admin/shop/stats?${params}`, { cache: 'no-store' });
       const data = await res.json();
-      if (res.ok) setStats(data); else setStats(null);
+      if (res.ok) { setStats(data); setSelectedPurchases({}); } else setStats(null);
     } catch (e) {
       console.error('Failed to fetch stats:', e);
     } finally {
@@ -134,6 +141,7 @@ export default function AdminShopPage() {
         const data = await res.json();
         if (!data.isAdmin) { router.push('/dashboard'); return; }
         setIsAdmin(true);
+        setIsSuperAdmin(!!data.isSuperAdmin);
         setLoading(false);
       } catch { router.push('/dashboard'); }
     })();
@@ -156,6 +164,12 @@ export default function AdminShopPage() {
     const id = setTimeout(() => { fetchStats(purchasePage, purchaseFilter); }, 0);
     return () => clearTimeout(id);
   }, [isAdmin, activeTab, purchasePage, purchaseFilter, fetchStats]);
+
+  const openConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmTitle(title); setConfirmMessage(message); setConfirmAction(() => onConfirm); setConfirmOpen(true);
+  };
+  const closeConfirm = () => { setConfirmOpen(false); setConfirmAction(null); };
+  const executeConfirm = () => { if (confirmAction) confirmAction(); closeConfirm(); };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -526,6 +540,19 @@ export default function AdminShopPage() {
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--toa-muted)' }}>Loading stats…</div>
         ) : (
           <>
+            {/* ── Purge Controls (super-admin) ── */}
+            {isSuperAdmin && (
+              <div className="toa-panel" style={{ padding: '1rem', borderColor: 'rgba(220,38,38,0.3)', marginBottom: '1.5rem' }}>
+                <div style={{ fontFamily: 'var(--toa-font-display)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--toa-danger)', marginBottom: '0.75rem' }}>Purchase Log Management</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="number" min={1} value={purgeDays || ''} onChange={(e) => setPurgeDays(Number(e.target.value))} placeholder="Days" className="toa-input" style={{ maxWidth: '7rem' }} />
+                    <button onClick={() => { if (!purgeDays) return; openConfirm('Purge Older Purchases', `Permanently purge purchase records older than ${purgeDays} days? This cannot be undone.`, async () => { await fetch('/api/admin/shop/stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'purge', days: purgeDays }) }); fetchStats(1, purchaseFilter); }); }} className="toa-btn toa-btn-ghost toa-btn-sm" style={{ color: 'var(--toa-danger)' }}>Purge Older</button>
+                  </div>
+                  <button onClick={() => openConfirm('Purge All Purchases', 'Permanently purge ALL purchase records? This cannot be undone.', async () => { await fetch('/api/admin/shop/stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'purge' }) }); fetchStats(1, purchaseFilter); })} className="toa-btn toa-btn-ghost toa-btn-sm" style={{ color: 'var(--toa-danger)' }}>Purge All</button>
+                </div>
+              </div>
+            )}
             {/* Summary stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
               {[
@@ -576,7 +603,12 @@ export default function AdminShopPage() {
 
             {/* Purchase history */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <div className="toa-label">Purchase History ({(stats?.total || 0).toLocaleString()})</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <div className="toa-label">Purchase History ({(stats?.total || 0).toLocaleString()})</div>
+                {isSuperAdmin && Object.values(selectedPurchases).some(Boolean) && (
+                  <button onClick={() => { const ids = Object.entries(selectedPurchases).filter(([, v]) => v).map(([k]) => Number(k)); if (!ids.length) return; openConfirm('Delete Selected', `Permanently delete ${ids.length} purchase record(s)? VP is not refunded. This cannot be undone.`, async () => { await fetch('/api/admin/shop/stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', ids }) }); fetchStats(purchasePage, purchaseFilter); }); }} className="toa-btn toa-btn-ghost toa-btn-sm" style={{ color: 'var(--toa-danger)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}><Trash2 size={13} /> Delete Selected</button>
+                )}
+              </div>
               <div style={{ display: 'flex', gap: '0.4rem' }}>
                 {(['all', 'undelivered'] as const).map(f => (
                   <button key={f} onClick={() => { setPurchaseFilter(f); setPurchasePage(1); fetchStats(1, f); }} className="toa-btn toa-btn-sm" style={{ padding: '0.2rem 0.65rem', fontSize: '0.75rem', background: purchaseFilter === f ? 'rgba(184,155,94,0.15)' : 'transparent', color: purchaseFilter === f ? 'var(--toa-gold-bright)' : 'var(--toa-muted)', border: `1px solid ${purchaseFilter === f ? 'rgba(184,155,94,0.4)' : 'transparent'}` }}>
@@ -588,11 +620,14 @@ export default function AdminShopPage() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
                 <thead><tr style={{ borderBottom: '2px solid var(--toa-border)' }}>
+                  {isSuperAdmin && <th style={TH_STYLE}><input type="checkbox" onChange={(e) => { const m: Record<number,boolean> = {}; (stats?.purchases||[]).forEach(p => { m[p.PurchaseID] = e.target.checked; }); setSelectedPurchases(m); }} /></th>}
                   {['#', 'Account', 'Item', 'Type', 'VP', 'Purchased', 'Delivered'].map(h => <th key={h} style={TH_STYLE}>{h}</th>)}
+                  {isSuperAdmin && <th style={TH_STYLE}></th>}
                 </tr></thead>
                 <tbody>
                   {(stats?.purchases || []).map(p => (
                     <tr key={p.PurchaseID} style={{ borderBottom: '1px solid var(--toa-border)' }}>
+                      {isSuperAdmin && <td style={TD_STYLE}><input type="checkbox" checked={!!selectedPurchases[p.PurchaseID]} onChange={(e) => setSelectedPurchases(s => ({ ...s, [p.PurchaseID]: e.target.checked }))} /></td>}
                       <td style={{ ...TD_STYLE, color: 'var(--toa-muted)', fontSize: '0.75rem' }}>{p.PurchaseID}</td>
                       <td style={{ ...TD_STYLE, color: 'var(--toa-gold-bright)', fontWeight: 600 }}>{p.AccountName}</td>
                       <td style={{ ...TD_STYLE }}>{p.szItemName}</td>
@@ -608,10 +643,15 @@ export default function AdminShopPage() {
                           ? <CheckCircle size={14} color="var(--toa-success)" />
                           : <AlertTriangle size={14} color="var(--toa-danger)" />}
                       </td>
+                      {isSuperAdmin && (
+                        <td style={TD_STYLE}>
+                          <button onClick={() => openConfirm('Delete Purchase', 'Permanently delete this purchase record? VP is not refunded. This cannot be undone.', async () => { await fetch('/api/admin/shop/stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', ids: [p.PurchaseID] }) }); fetchStats(purchasePage, purchaseFilter); })} className="toa-btn toa-btn-ghost toa-btn-xs" style={{ color: 'var(--toa-danger)' }}>Del</button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                   {(stats?.purchases || []).length === 0 && (
-                    <tr><td colSpan={7} style={{ ...TD_STYLE, textAlign: 'center', color: 'var(--toa-muted)', padding: '2rem' }}>No purchases yet.</td></tr>
+                    <tr><td colSpan={isSuperAdmin ? 9 : 7} style={{ ...TD_STYLE, textAlign: 'center', color: 'var(--toa-muted)', padding: '2rem' }}>No purchases yet.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -621,6 +661,19 @@ export default function AdminShopPage() {
                 <button onClick={() => { const p = Math.max(1, purchasePage - 1); setPurchasePage(p); fetchStats(p, purchaseFilter); }} disabled={purchasePage === 1} className="toa-btn toa-btn-ghost toa-btn-sm" style={{ opacity: purchasePage === 1 ? 0.4 : 1 }}>Prev</button>
                 <span style={{ color: 'var(--toa-muted)', fontSize: '0.85rem' }}>Page {purchasePage} of {purchaseTotalPages}</span>
                 <button onClick={() => { const p = Math.min(purchaseTotalPages, purchasePage + 1); setPurchasePage(p); fetchStats(p, purchaseFilter); }} disabled={purchasePage === purchaseTotalPages} className="toa-btn toa-btn-ghost toa-btn-sm" style={{ opacity: purchasePage === purchaseTotalPages ? 0.4 : 1 }}>Next</button>
+              </div>
+            )}
+            {/* Confirm Modal */}
+            {confirmOpen && (
+              <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)', padding: '1rem' }} onClick={closeConfirm}>
+                <div className="toa-seal-card" style={{ maxWidth: '28rem', width: '100%', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }} onClick={(e) => e.stopPropagation()}>
+                  <div style={{ fontFamily: 'var(--toa-font-display)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--toa-gold-bright)' }}>{confirmTitle}</div>
+                  <div style={{ color: 'var(--toa-bone)', fontSize: '0.85rem' }}>{confirmMessage}</div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.5rem' }}>
+                    <button onClick={closeConfirm} className="toa-btn toa-btn-ghost toa-btn-sm">Cancel</button>
+                    <button onClick={executeConfirm} className="toa-btn toa-btn-ghost toa-btn-sm" style={{ color: 'var(--toa-danger)' }}>Confirm</button>
+                  </div>
+                </div>
               </div>
             )}
           </>
