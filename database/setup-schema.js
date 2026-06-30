@@ -174,6 +174,64 @@ async function setupDatabase() {
     `);
     console.log('AdminUsers table ready');
 
+    // Create WebVotePoints table
+    await sql.query(`
+      IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'WebVotePoints')
+      BEGIN
+        CREATE TABLE WebVotePoints (
+          AccountName NVARCHAR(50) PRIMARY KEY,
+          VotePoints INT NOT NULL DEFAULT 0,
+          TotalEarned INT NOT NULL DEFAULT 0,
+          TotalSpent INT NOT NULL DEFAULT 0,
+          UpdatedAt DATETIME DEFAULT GETDATE()
+        );
+      END
+    `);
+    console.log('WebVotePoints table ready');
+
+    // Create WebShopItems table
+    await sql.query(`
+      IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'WebShopItems')
+      BEGIN
+        CREATE TABLE WebShopItems (
+          ShopItemID INT IDENTITY(1,1) PRIMARY KEY,
+          sItemID INT NOT NULL,
+          szItemName NVARCHAR(100) NOT NULL,
+          szLastCategory NVARCHAR(20) NOT NULL,
+          szItemPath NVARCHAR(20) NOT NULL,
+          PriceVP INT NOT NULL DEFAULT 10,
+          IsActive BIT NOT NULL DEFAULT 1,
+          SortOrder INT NOT NULL DEFAULT 0,
+          CreatedAt DATETIME DEFAULT GETDATE(),
+          CONSTRAINT UQ_WebShopItem UNIQUE (sItemID, szItemName)
+        );
+      END
+    `);
+    console.log('WebShopItems table ready');
+
+    // Create WebShopPurchases table
+    await sql.query(`
+      IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'WebShopPurchases')
+      BEGIN
+        CREATE TABLE WebShopPurchases (
+          PurchaseID INT IDENTITY(1,1) PRIMARY KEY,
+          AccountName NVARCHAR(50) NOT NULL,
+          ShopItemID INT NOT NULL,
+          sItemID INT NOT NULL,
+          szItemName NVARCHAR(100) NOT NULL,
+          PriceVP INT NOT NULL,
+          ItemCode VARCHAR(255) NOT NULL,
+          ItemSpec INT NOT NULL DEFAULT 0,
+          PurchasedAt DATETIME DEFAULT GETDATE(),
+          Delivered BIT NOT NULL DEFAULT 0,
+          DeliveredAt DATETIME NULL
+        );
+        CREATE INDEX IX_WebShopPurchases_Account ON WebShopPurchases(AccountName);
+        CREATE INDEX IX_WebShopPurchases_PurchasedAt ON WebShopPurchases(PurchasedAt);
+      END
+    `);
+    console.log('WebShopPurchases table ready');
+
     // Insert default configurations
     const configCheck = await sql.query(`SELECT COUNT(*) as count FROM WebsiteConfigs`);
     if (configCheck.recordset[0].count === 0) {
@@ -222,7 +280,8 @@ async function setupDatabase() {
         ('crypto_usd_to_credit_rate', '100', 'Credits per 1 USD for crypto payments'),
         ('crypto_min_usd', '5', 'Minimum USD amount for crypto payments'),
         ('vote_reward_cooldown_hours', '12', 'Hours between vote rewards'),
-        ('vote_reward_coins', '5', 'Coins awarded per vote'),
+        ('vote_reward_coins', '5', 'Coins awarded per vote (legacy)'),
+        ('vote_reward_vp', '5', 'Vote Points awarded per vote'),
         ('discord_invite_url', 'https://discord.gg/taleofasia', 'Discord invite URL'),
         ('facebook_page_url', 'https://www.facebook.com/TaleOfAsia', 'Facebook page URL');
       `);

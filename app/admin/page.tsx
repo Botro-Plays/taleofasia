@@ -9,7 +9,7 @@ import {
   Settings2, Gamepad2, Users, CreditCard, DollarSign,
   Timer, ScrollText, BarChart2, FileText, Zap, Newspaper,
   ChevronLeft, AlertTriangle, CheckCircle, WifiOff, Clock,
-  XCircle, TrendingUp, ShieldAlert, Vote, Package, ShieldBan,
+  XCircle, TrendingUp, ShieldAlert, Vote, Package, ShieldBan, ShoppingBag,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -135,6 +135,7 @@ export default function AdminDashboardPage() {
     { Icon: Zap,        title: 'Event Management',   description: 'Create and manage in-game events',     href: '/admin/events',         accent: 'var(--toa-ember)' },
     { Icon: Package,    title: 'Item Visibility',    description: 'Control which items show on public item list', href: '/admin/items',  accent: 'var(--toa-gold)' },
     { Icon: ShieldBan,  title: 'Rate Limits',         description: 'Monitor & flush blocked IPs, registration throttles', href: '/admin/rate-limits', accent: 'var(--toa-ember)' },
+    { Icon: ShoppingBag, title: 'Web Shop',            description: 'Manage VP shop items, prices, and availability',     href: '/admin/shop',        accent: 'var(--toa-gold)' },
   ];
 
   const paypalItems = [

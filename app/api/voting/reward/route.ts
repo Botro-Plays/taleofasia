@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
-import { webDB, userDB } from '@/lib/db';
+import { webDB } from '@/lib/db';
 import { invalidate } from '@/lib/cache';
 import { logApi, logError } from '@/lib/logging';
 
@@ -37,18 +37,22 @@ export async function POST(request: NextRequest) {
     // Get reward amount from config
     const rewardConfig = await webDB.query(`
       SELECT ConfigKey, ConfigValue FROM WebsiteConfigs 
-      WHERE ConfigKey IN ('vote_reward_coins', 'vote_reward_cooldown_hours')
+      WHERE ConfigKey IN ('vote_reward_vp', 'vote_reward_cooldown_hours')
     `);
     const configMap: Record<string, string> = {};
     rewardConfig.recordset.forEach((r: any) => { configMap[r.ConfigKey] = r.ConfigValue; });
-    const rewardPerVote = parseInt(configMap['vote_reward_coins'] || '5');
+    const rewardPerVote = parseInt(configMap['vote_reward_vp'] || '5');
     const totalReward = rewardPerVote * unclaimedCount;
 
-    // Award coins to user
-    await userDB.query(`
-      UPDATE UserInfo
-      SET Coins = Coins + @reward
-      WHERE AccountName = @username
+    // Award Vote Points to user (upsert)
+    await webDB.query(`
+      MERGE WebVotePoints AS t
+      USING (SELECT @username AS AccountName) AS s
+      ON t.AccountName = s.AccountName
+      WHEN MATCHED THEN
+        UPDATE SET VotePoints = VotePoints + @reward, TotalEarned = TotalEarned + @reward, UpdatedAt = GETDATE()
+      WHEN NOT MATCHED THEN
+        INSERT (AccountName, VotePoints, TotalEarned) VALUES (@username, @reward, @reward);
     `, {
       reward: totalReward,
       username,
@@ -57,7 +61,7 @@ export async function POST(request: NextRequest) {
     // Atomically mark all unclaimed votes as claimed
     const claimResult = await webDB.query(`
       UPDATE VoteLogs
-      SET RewardClaimed = 1
+      SET RewardClaimed = 1, RewardClaimedAt = GETDATE()
       WHERE AccountName = @username AND RewardClaimed = 0
     `, { username });
 
@@ -72,16 +76,23 @@ export async function POST(request: NextRequest) {
     await logApi({
       action: 'ADMIN_ACTION',
       account: username,
-      details: `VOTE_REWARD: Awarded ${totalReward} coins for ${unclaimedCount} vote${unclaimedCount !== 1 ? 's' : ''}`,
+      details: `VOTE_REWARD: Awarded ${totalReward} VP for ${unclaimedCount} vote${unclaimedCount !== 1 ? 's' : ''}`,
       ip: request.headers.get('x-forwarded-for') || '127.0.0.1',
     });
 
     // Invalidate voting logs cache so dashboard updates immediately
     invalidate(`votelogs:${username}`);
 
+    // Fetch updated VP balance
+    const vpResult = await webDB.query(`
+      SELECT VotePoints FROM WebVotePoints WHERE AccountName = @username
+    `, { username });
+    const newBalance = vpResult.recordset[0]?.VotePoints ?? 0;
+
     return NextResponse.json({
-      message: `Successfully claimed ${totalReward} coins from ${unclaimedCount} vote${unclaimedCount !== 1 ? 's' : ''}!`,
+      message: `Successfully claimed ${totalReward} VP from ${unclaimedCount} vote${unclaimedCount !== 1 ? 's' : ''}!`,
       reward: totalReward,
+      votePoints: newBalance,
       votesClaimed: unclaimedCount,
     });
   } catch (error) {

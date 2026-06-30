@@ -25,6 +25,7 @@ export async function GET() {
       let recaptchaVersion = 'v2';
       let voteSiteId = '';
       let voteRewardCoins = '5';
+      let voteRewardVP = '5';
       let voteCooldownHours = '12';
       let voteTestingMode = 'false';
       const payments: Record<string, string> = {};
@@ -38,6 +39,7 @@ export async function GET() {
         if (key === 'recaptcha_version') recaptchaVersion = val;
         if (key === 'xtremetop100_site_id') voteSiteId = val;
         if (key === 'vote_reward_coins') voteRewardCoins = val;
+        if (key === 'vote_reward_vp') voteRewardVP = val;
         if (key === 'vote_reward_cooldown_hours') voteCooldownHours = val;
         if (key === 'vote_testing_mode') voteTestingMode = val;
         // Expose payment-related config (no secrets)
@@ -92,6 +94,7 @@ export async function GET() {
         voting: {
           siteId: voteSiteId,
           rewardCoins: parseInt(voteRewardCoins || '5', 10) || 5,
+          rewardVP: parseInt(voteRewardVP || '5', 10) || 5,
           cooldownHours: parseInt(voteCooldownHours || '12', 10) || 12,
           postbackUrl: 'https://taleofasia.com/api/voting/postback',
           testingMode: voteTestingMode === 'true',

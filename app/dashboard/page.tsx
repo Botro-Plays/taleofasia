@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { GlobalTheme } from '@/app/components/GlobalTheme';
-import { Gem, Clock, Users, Sword, CreditCard, KeyRound, Shield, ExternalLink, ChevronRight, CheckCircle, XCircle, User, Gift } from 'lucide-react';
+import { Gem, Clock, Users, Sword, CreditCard, KeyRound, Shield, ExternalLink, ChevronRight, CheckCircle, XCircle, User, Gift, ShoppingBag } from 'lucide-react';
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -16,7 +16,8 @@ export default function DashboardPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [timePoints, setTimePoints] = useState<number>(0);
   const [coins, setCoins] = useState<number | null>(null);
-  const [voteConfig, setVoteConfig] = useState<{ siteId: string; rewardCoins: number; cooldownHours: number; testingMode: boolean }>({ siteId: '1132379076', rewardCoins: 5, cooldownHours: 12, testingMode: false });
+  const [voteConfig, setVoteConfig] = useState<{ siteId: string; rewardVP: number; cooldownHours: number; testingMode: boolean }>({ siteId: '1132379076', rewardVP: 5, cooldownHours: 12, testingMode: false });
+  const [votePoints, setVotePoints] = useState(0);
   const [simulatingVote, setSimulatingVote] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -79,7 +80,7 @@ export default function DashboardPage() {
         if (data.voting) {
           setVoteConfig({
             siteId: data.voting.siteId || '1132379076',
-            rewardCoins: data.voting.rewardCoins || 5,
+            rewardVP: data.voting.rewardVP || 5,
             cooldownHours: data.voting.cooldownHours || 12,
             testingMode: !!data.voting.testingMode,
           });
@@ -87,6 +88,18 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Error fetching vote config:', error);
+    }
+  }, []);
+
+  const fetchVotePoints = useCallback(async () => {
+    try {
+      const response = await fetch('/api/user/vote-points', { cache: 'no-store' });
+      if (response.ok) {
+        const data = await response.json();
+        setVotePoints(typeof data.votePoints === 'number' ? data.votePoints : 0);
+      }
+    } catch (error) {
+      console.error('Error fetching vote points:', error);
     }
   }, []);
 
@@ -106,6 +119,7 @@ export default function DashboardPage() {
       void checkAdminStatus();
       void fetchTimePoints();
       void fetchVoteConfig();
+      void fetchVotePoints();
     };
 
     runAll();
@@ -123,7 +137,7 @@ export default function DashboardPage() {
       window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [status, router, fetchUserData, fetchVotingLogs, checkAdminStatus, fetchTimePoints, fetchVoteConfig]);
+  }, [status, router, fetchUserData, fetchVotingLogs, checkAdminStatus, fetchTimePoints, fetchVoteConfig, fetchVotePoints]);
 
   const handleClaimReward = async () => {
     setClaimingReward(true);
@@ -134,13 +148,13 @@ export default function DashboardPage() {
         showToast(data.message, 'success');
         // Immediately mark all votes as claimed locally for instant UI feedback
         setVotingLogs(prev => prev.map(log => ({ ...log, RewardClaimed: true })));
-        // Update coins locally
-        if (typeof data.reward === 'number') {
-          setCoins(prev => (prev !== null ? prev + data.reward : prev));
+        // Update VP locally
+        if (typeof data.votePoints === 'number') {
+          setVotePoints(data.votePoints);
         }
         // Re-fetch to confirm from server
-        fetchUserData();
         fetchVotingLogs();
+        void fetchVotePoints();
       } else {
         showToast(data.error, 'error');
       }
@@ -245,6 +259,19 @@ export default function DashboardPage() {
             <Clock size={36} style={{ position: 'absolute', right: '0.875rem', bottom: '0.75rem', color: 'var(--toa-gold)', opacity: 0.12 }} />
           </div>
 
+          {/* Vote Points */}
+          <Link href="/shop" style={{ textDecoration: 'none' }}>
+            <div className="toa-seal-card" style={{ padding: '1.5rem', position: 'relative', overflow: 'hidden', cursor: 'pointer' }}>
+              <div className="toa-seal-corner toa-seal-corner-tl" />
+              <div className="toa-seal-corner toa-seal-corner-br" />
+              <div style={{ fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--toa-muted)', marginBottom: '0.6rem' }}>Vote Points</div>
+              <div style={{ fontFamily: 'var(--toa-font-display)', fontSize: '1.75rem', fontWeight: 700, color: 'var(--toa-gold-bright)', lineHeight: 1 }}>
+                {votePoints.toLocaleString()}
+              </div>
+              <ShoppingBag size={36} style={{ position: 'absolute', right: '0.875rem', bottom: '0.75rem', color: 'var(--toa-gold)', opacity: 0.12 }} />
+            </div>
+          </Link>
+
           {/* Characters */}
           <div className="toa-seal-card" style={{ padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
             <div className="toa-seal-corner toa-seal-corner-tl" />
@@ -299,6 +326,14 @@ export default function DashboardPage() {
               sub: 'Purchase in-game coins via payment gateways',
             },
             {
+              href: '/shop',
+              icon: <ShoppingBag size={20} style={{ color: 'var(--toa-gold)' }} />,
+              iconBg: 'rgba(184,155,94,0.08)',
+              iconBorder: 'rgba(184,155,94,0.2)',
+              label: 'Vote Shop',
+              sub: 'Spend Vote Points on premium and event items',
+            },
+            {
               href: '/dashboard/change-password',
               icon: <KeyRound size={20} style={{ color: 'var(--toa-info)' }} />,
               iconBg: 'rgba(74,111,165,0.08)',
@@ -345,16 +380,16 @@ export default function DashboardPage() {
                 Server Vote
                 {votingLogs.filter(log => !log.RewardClaimed).length > 0 && (() => {
                   const unclaimed = votingLogs.filter(log => !log.RewardClaimed).length;
-                  const totalCoins = unclaimed * voteConfig.rewardCoins;
+                  const totalVP = unclaimed * voteConfig.rewardVP;
                   return (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', fontWeight: 600, color: 'var(--toa-success)', background: 'rgba(34,197,94,0.12)', padding: '0.15rem 0.5rem', borderRadius: '9999px', border: '1px solid rgba(34,197,94,0.25)', textTransform: 'none', letterSpacing: 0 }}>
-                      <Gift size={11} /> {totalCoins} Coins ready{unclaimed > 1 ? ` (${unclaimed} votes)` : ''}
+                      <Gift size={11} /> {totalVP} VP ready{unclaimed > 1 ? ` (${unclaimed} votes)` : ''}
                     </span>
                   );
                 })()}
               </div>
               <p style={{ fontSize: '0.82rem', color: 'var(--toa-muted)', margin: 0 }}>
-                Vote every {voteConfig.cooldownHours} hours — earn <span style={{ color: 'var(--toa-gold-bright)' }}>{voteConfig.rewardCoins} Coins</span> per vote.
+                Vote every {voteConfig.cooldownHours} hours — earn <span style={{ color: 'var(--toa-gold-bright)' }}>{voteConfig.rewardVP} VP</span> per vote.
               </p>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
