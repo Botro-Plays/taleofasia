@@ -45,6 +45,14 @@ export default function RankingsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const rankingTypes = [
     { value: 'level' as RankingType, label: 'Level', icon: <Trophy className="w-4 h-4" /> },
@@ -421,7 +429,8 @@ export default function RankingsPage() {
             </div>
 
             {/* Desktop Table */}
-            <div className="hidden md:block overflow-x-auto">
+            {!isMobile && (
+            <div style={{ overflowX: 'auto' }}>
               <table className="toa-table">
                 <thead>
                   <tr>
@@ -444,9 +453,11 @@ export default function RankingsPage() {
                 </tbody>
               </table>
             </div>
+            )}
 
             {/* Mobile Cards */}
-            <div className="md:hidden" style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {isMobile && (
+              <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {rankings.map((player, index) => {
                 const medal = RANK_MEDALS[index];
                 return (
@@ -497,6 +508,7 @@ export default function RankingsPage() {
                 );
               })}
             </div>
+            )}
 
           </div>
         ) : (
