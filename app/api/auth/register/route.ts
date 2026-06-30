@@ -26,7 +26,7 @@ async function ensureVerifyTable() {
 
 export async function POST(request: NextRequest) {
   const ip = getClientIP(request);
-  const limit = rateLimiter.check(ip, 'auth-register', 15, 15 * 60 * 1000);
+  const limit = rateLimiter.check(ip, 'auth-register', 50, 60 * 60 * 1000);
   if (!limit.allowed) {
     console.warn(`[register] Rate limit hit for IP: ${ip}, retry after ${limit.retryAfter}s`);
     return rateLimitResponse(limit.retryAfter);
