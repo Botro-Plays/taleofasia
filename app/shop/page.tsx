@@ -49,6 +49,7 @@ export default function ShopPage() {
   const [simulatingVote, setSimulatingVote] = useState(false);
   const [countdown, setCountdown] = useState('');
   const [inCooldown, setInCooldown] = useState(false);
+  const [lastVoteTime, setLastVoteTime] = useState<string | null>(null);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -101,7 +102,7 @@ export default function ShopPage() {
     if (status !== 'authenticated') return;
     try {
       const res = await fetch('/api/user/voting-logs', { cache: 'no-store' });
-      if (res.ok) setVotingLogs(await res.json());
+      if (res.ok) { const d = await res.json(); setVotingLogs(d.logs || []); setLastVoteTime(d.lastVoteTime || null); }
     } catch { /* ignore */ }
   }, [status]);
 
@@ -122,7 +123,9 @@ export default function ShopPage() {
   }, [status]);
 
   useEffect(() => {
-    const lastVote = votingLogs.length > 0 ? new Date(votingLogs[0].VoteTime).getTime() : null;
+    const logLast = votingLogs.length > 0 ? new Date(votingLogs[0].VoteTime).getTime() : null;
+    const pointsLast = lastVoteTime ? new Date(lastVoteTime).getTime() : null;
+    const lastVote = logLast && pointsLast ? Math.max(logLast, pointsLast) : (logLast || pointsLast);
     const nextAt = lastVote ? lastVote + voteConfig.cooldownHours * 3600 * 1000 : null;
     const tick = () => {
       if (!nextAt) { setInCooldown(false); setCountdown(''); return; }
@@ -137,7 +140,7 @@ export default function ShopPage() {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [votingLogs, voteConfig.cooldownHours]);
+  }, [votingLogs, voteConfig.cooldownHours, lastVoteTime]);
 
   useEffect(() => {
     const id = setTimeout(() => {

@@ -16,17 +16,25 @@ export async function GET() {
 
     const username = session.user.id;
 
-    const logs = await cached(`votelogs:${username}`, 15_000, async () => {
+    const data = await cached(`votelogs:${username}`, 15_000, async () => {
       const votingLogsResult = await webDB.query(`
         SELECT TOP 10 LogID, VoteTime, IPAddress AS IP, RewardClaimed
         FROM VoteLogs
         WHERE AccountName = @username
         ORDER BY VoteTime DESC
       `, { username });
-      return votingLogsResult.recordset;
+
+      const lastVoteResult = await webDB.query(`
+        SELECT LastVoteTime FROM WebVotePoints WHERE AccountName = @username
+      `, { username });
+
+      return {
+        logs: votingLogsResult.recordset,
+        lastVoteTime: lastVoteResult.recordset[0]?.LastVoteTime || null,
+      };
     });
 
-    return NextResponse.json(logs, { headers: { 'Cache-Control': 'private, max-age=15' } });
+    return NextResponse.json(data, { headers: { 'Cache-Control': 'private, max-age=15' } });
   } catch (error) {
     console.error('Error fetching voting logs:', error);
     return NextResponse.json(

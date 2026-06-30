@@ -188,9 +188,15 @@ async function setupDatabase() {
           VotePoints INT NOT NULL DEFAULT 0,
           TotalEarned INT NOT NULL DEFAULT 0,
           TotalSpent INT NOT NULL DEFAULT 0,
+          LastVoteTime DATETIME NULL,
           UpdatedAt DATETIME DEFAULT GETDATE()
         );
       END
+    `);
+    // Migration guard: add LastVoteTime if table predates this column
+    await sql.query(`
+      IF NOT EXISTS (SELECT * FROM sys.columns WHERE name = 'LastVoteTime' AND object_id = OBJECT_ID('WebVotePoints'))
+        ALTER TABLE WebVotePoints ADD LastVoteTime DATETIME NULL;
     `);
     console.log('WebVotePoints table ready');
 

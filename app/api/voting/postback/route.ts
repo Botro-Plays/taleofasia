@@ -88,6 +88,14 @@ export async function GET(request: NextRequest) {
       ip: votingIp,
     });
 
+    // Update LastVoteTime in WebVotePoints so cooldown survives log purges
+    await webDB.query(`
+      IF EXISTS (SELECT 1 FROM WebVotePoints WHERE AccountName = @username)
+        UPDATE WebVotePoints SET LastVoteTime = GETDATE() WHERE AccountName = @username
+      ELSE
+        INSERT INTO WebVotePoints (AccountName, VotePoints, LastVoteTime) VALUES (@username, 0, GETDATE())
+    `, { username });
+
     // Invalidate voting logs cache so dashboard shows the new vote immediately
     invalidate(`votelogs:${username}`);
 

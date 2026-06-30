@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const [votePoints, setVotePoints] = useState(0);
   const [countdown, setCountdown] = useState('');
   const [inCooldown, setInCooldown] = useState(false);
+  const [lastVoteTime, setLastVoteTime] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
@@ -45,7 +46,8 @@ export default function DashboardPage() {
     try {
       const response = await fetch('/api/user/voting-logs', { cache: 'no-store' });
       const data = await response.json();
-      setVotingLogs(data);
+      setVotingLogs(data.logs || []);
+      setLastVoteTime(data.lastVoteTime || null);
     } catch (error) {
       console.error('Error fetching voting logs:', error);
     }
@@ -105,7 +107,9 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const lastVote = votingLogs.length > 0 ? new Date(votingLogs[0].VoteTime).getTime() : null;
+    const logLast = votingLogs.length > 0 ? new Date(votingLogs[0].VoteTime).getTime() : null;
+    const pointsLast = lastVoteTime ? new Date(lastVoteTime).getTime() : null;
+    const lastVote = logLast && pointsLast ? Math.max(logLast, pointsLast) : (logLast || pointsLast);
     const nextAt = lastVote ? lastVote + voteConfig.cooldownHours * 3600 * 1000 : null;
     const tick = () => {
       if (!nextAt) { setInCooldown(false); setCountdown(''); return; }
@@ -120,7 +124,7 @@ export default function DashboardPage() {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [votingLogs, voteConfig.cooldownHours]);
+  }, [votingLogs, voteConfig.cooldownHours, lastVoteTime]);
 
   useEffect(() => {
     if (typeof document !== 'undefined' && document.cookie.includes('toa_vote_return=1')) {
