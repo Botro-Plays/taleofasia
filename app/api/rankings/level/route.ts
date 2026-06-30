@@ -66,6 +66,8 @@ export async function GET(request: NextRequest) {
         const clan = clanByName.get(player.Name) || { IDX: 0, ClanName: 'No Clan', IconID: 0 };
         return {
           ...player,
+          RebornStage: player.RebornStage ?? 0,
+          RebornCount: player.RebornCount ?? 0,
           ClanID: clan.IDX,
           ClanName: clan.ClanName,
           IconID: clan.IconID,
