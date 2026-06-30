@@ -64,11 +64,11 @@ export default function Home() {
     fetch('/api/public/config').then(r => r.json()).then(d => setSocial(d?.social || {})).catch(() => {});
   }, []);
 
-  // Redirect logged-in users back to dashboard if they came from voting
+  // Redirect logged-in users back to shop if they came from voting
   useEffect(() => {
     if (session?.user && document.cookie.includes('toa_vote_return=1')) {
       document.cookie = 'toa_vote_return=; max-age=0; path=/';
-      router.replace('/dashboard');
+      router.replace('/shop');
     }
   }, [session, router]);
 
