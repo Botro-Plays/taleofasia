@@ -265,6 +265,7 @@ export default function ShopPage() {
 
   const eventItems = items.filter(i => i.szItemPath === 'Event');
   const premiumItems = items.filter(i => i.szItemPath === 'Premium');
+  const potionItems = items.filter(i => i.szItemPath === 'Potion');
   const unclaimedCount = votingLogs.filter(log => !log.RewardClaimed).length;
   const unclaimedVP = unclaimedCount * voteConfig.rewardVP;
 
@@ -462,8 +463,17 @@ export default function ShopPage() {
           {eventItems.length > 0 && (
             <>
               <div className="toa-label" style={{ marginBottom: '1rem' }}>Event Items</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
                 {eventItems.map(renderItemCard)}
+              </div>
+            </>
+          )}
+
+          {potionItems.length > 0 && (
+            <>
+              <div className="toa-label" style={{ marginBottom: '1rem' }}>Potion Items</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
+                {potionItems.map(renderItemCard)}
               </div>
             </>
           )}

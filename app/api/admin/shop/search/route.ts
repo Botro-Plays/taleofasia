@@ -18,10 +18,10 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * pageSize;
 
     // Only allow valid path values
-    const allowedPaths = ['Event', 'Premium'];
+    const allowedPaths = ['Event', 'Premium', 'Potion'];
     const pathClause = allowedPaths.includes(pathFilter)
       ? `szItemPath = '${pathFilter}'`
-      : `szItemPath IN ('Event', 'Premium')`;
+      : `szItemPath IN ('Event', 'Premium', 'Potion')`;
 
     let query = `
       SELECT sItemID, szItemName, szLastCategory, szItemPath, iLevel

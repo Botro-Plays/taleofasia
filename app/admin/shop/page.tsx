@@ -38,7 +38,7 @@ interface PurchaseStats {
   pageSize: number;
 }
 
-const PATH_FILTERS = ['All', 'Event', 'Premium'] as const;
+const PATH_FILTERS = ['All', 'Event', 'Premium', 'Potion'] as const;
 type PathFilter = typeof PATH_FILTERS[number];
 
 const TABS = ['Item Catalog', 'Purchase Log'] as const;
@@ -372,7 +372,7 @@ export default function AdminShopPage() {
                     <tr key={item.ShopItemID} style={{ borderBottom: '1px solid var(--toa-border)' }}>
                       <td style={{ ...TD_STYLE, color: 'var(--toa-gold-bright)', fontWeight: 600 }}>{item.szItemName}</td>
                       <td style={{ ...TD_STYLE, color: 'var(--toa-muted)' }}>
-                        <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: 3, background: item.szItemPath === 'Premium' ? 'rgba(184,155,94,0.12)' : 'rgba(74,111,165,0.12)', color: item.szItemPath === 'Premium' ? 'var(--toa-gold)' : 'var(--toa-info)' }}>
+                        <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: 3, background: item.szItemPath === 'Premium' ? 'rgba(184,155,94,0.12)' : item.szItemPath === 'Potion' ? 'rgba(74,139,58,0.12)' : 'rgba(74,111,165,0.12)', color: item.szItemPath === 'Premium' ? 'var(--toa-gold)' : item.szItemPath === 'Potion' ? 'var(--toa-success)' : 'var(--toa-info)' }}>
                           {item.szItemPath}
                         </span>
                       </td>
@@ -428,7 +428,7 @@ export default function AdminShopPage() {
           )}
 
           {/* ── Add Items ── */}
-          <div className="toa-label" style={{ marginBottom: '0.75rem' }}>Add Items from GameDB (Event &amp; Premium only)</div>
+          <div className="toa-label" style={{ marginBottom: '0.75rem' }}>Add Items from GameDB (Event, Premium &amp; Potion)</div>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.75rem' }}>
             <form onSubmit={handleSearch} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'nowrap' }}>
@@ -496,7 +496,7 @@ export default function AdminShopPage() {
                           <span style={{ color: 'var(--toa-gold-bright)', fontWeight: 600 }}>{item.szItemName}</span>
                         </td>
                         <td style={TD_STYLE}>
-                          <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: 3, background: item.szItemPath === 'Premium' ? 'rgba(184,155,94,0.12)' : 'rgba(74,111,165,0.12)', color: item.szItemPath === 'Premium' ? 'var(--toa-gold)' : 'var(--toa-info)' }}>
+                          <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: 3, background: item.szItemPath === 'Premium' ? 'rgba(184,155,94,0.12)' : item.szItemPath === 'Potion' ? 'rgba(74,139,58,0.12)' : 'rgba(74,111,165,0.12)', color: item.szItemPath === 'Premium' ? 'var(--toa-gold)' : item.szItemPath === 'Potion' ? 'var(--toa-success)' : 'var(--toa-info)' }}>
                             {item.szItemPath}
                           </span>
                         </td>
@@ -632,7 +632,7 @@ export default function AdminShopPage() {
                       <td style={{ ...TD_STYLE, color: 'var(--toa-gold-bright)', fontWeight: 600 }}>{p.AccountName}</td>
                       <td style={{ ...TD_STYLE }}>{p.szItemName}</td>
                       <td style={TD_STYLE}>
-                        <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: 3, background: p.szItemPath === 'Premium' ? 'rgba(184,155,94,0.12)' : 'rgba(74,111,165,0.12)', color: p.szItemPath === 'Premium' ? 'var(--toa-gold)' : 'var(--toa-info)' }}>
+                        <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: 3, background: p.szItemPath === 'Premium' ? 'rgba(184,155,94,0.12)' : p.szItemPath === 'Potion' ? 'rgba(74,139,58,0.12)' : 'rgba(74,111,165,0.12)', color: p.szItemPath === 'Premium' ? 'var(--toa-gold)' : p.szItemPath === 'Potion' ? 'var(--toa-success)' : 'var(--toa-info)' }}>
                           {p.szItemPath || '—'}
                         </span>
                       </td>
