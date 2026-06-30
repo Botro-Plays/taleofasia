@@ -249,6 +249,20 @@ export default function ShopPage() {
     }
   };
 
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.replace('/login');
+    }
+  }, [status, router]);
+
+  if (status === 'loading' || status === 'unauthenticated') {
+    return (
+      <PageShell label="Market" title="Vote Shop" backHref="/dashboard" backLabel="Dashboard">
+        <div className="toa-loading">Loading…</div>
+      </PageShell>
+    );
+  }
+
   const eventItems = items.filter(i => i.szItemPath === 'Event');
   const premiumItems = items.filter(i => i.szItemPath === 'Premium');
   const unclaimedCount = votingLogs.filter(log => !log.RewardClaimed).length;
