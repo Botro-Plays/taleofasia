@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     try {
       await logDB.query(`
         INSERT INTO ItemBox (AccountName, SenderName, ItemCode, ItemSpec, IsItem, Item, DateReceived, Date)
-        VALUES (@username, 'Server', @itemCode, 0, 0, NULL, GETDATE(), GETDATE())
+        VALUES (@username, 'Server', @itemCode, 0, 0, NULL, NULL, GETDATE())
       `, { username, itemCode: item.szLastCategory });
 
       // Mark as delivered
