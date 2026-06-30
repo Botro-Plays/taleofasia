@@ -1,4 +1,6 @@
 type RateEntry = {
+  ip: string;
+  endpoint: string;
   count: number;
   limit: number;
   resetTime: number;
@@ -33,7 +35,7 @@ class RateLimiter {
     const entry = this.store.get(storeKey);
 
     if (!entry || now > entry.resetTime) {
-      this.store.set(storeKey, { count: 1, limit, resetTime: now + windowMs });
+      this.store.set(storeKey, { ip, endpoint: key, count: 1, limit, resetTime: now + windowMs });
       return { allowed: true as const };
     }
 
@@ -55,12 +57,14 @@ class RateLimiter {
     }
   }
 
-  getAll(): Array<{ key: string; count: number; limit: number; resetTime: number; remaining: number; isBlocked: boolean }> {
+  getAll(): Array<{ key: string; ip: string; endpoint: string; count: number; limit: number; resetTime: number; remaining: number; isBlocked: boolean }> {
     const now = Date.now();
     return Array.from(this.store.entries())
       .filter(([, e]) => now <= e.resetTime)
       .map(([key, e]) => ({
         key,
+        ip: e.ip,
+        endpoint: e.endpoint,
         count: e.count,
         limit: e.limit,
         resetTime: e.resetTime,

@@ -9,6 +9,8 @@ import { ChevronLeft, RefreshCw, Trash2, ShieldOff, Shield } from 'lucide-react'
 
 interface RateEntry {
   key: string;
+  ip: string;
+  endpoint: string;
   count: number;
   limit: number;
   resetTime: number;
@@ -179,7 +181,7 @@ export default function RateLimitsPage() {
               <tbody>
                 {registerEntries.map((e, i) => (
                   <tr key={i} style={{ borderBottom: '1px solid rgba(184,155,94,0.07)', background: e.isBlocked ? 'rgba(199,80,48,0.04)' : undefined }}>
-                    <td style={{ padding: '0.7rem 1rem', fontFamily: 'monospace', color: 'var(--toa-bone)' }}>{e.key.split(':')[0]}</td>
+                    <td style={{ padding: '0.7rem 1rem', fontFamily: 'monospace', color: 'var(--toa-bone)', wordBreak: 'break-all' }}>{e.ip}</td>
                     <td style={{ padding: '0.7rem 1rem', color: e.isBlocked ? 'var(--toa-danger)' : 'var(--toa-bone)' }}>{e.count} / {e.limit}</td>
                     <td style={{ padding: '0.7rem 1rem', color: 'var(--toa-muted)' }}>{fmtRemaining(e.remaining)}</td>
                     <td style={{ padding: '0.7rem 1rem' }}>
@@ -210,7 +212,7 @@ export default function RateLimitsPage() {
                 <tbody>
                   {blockedOther.map((e, i) => (
                     <tr key={i} style={{ borderBottom: '1px solid rgba(184,155,94,0.07)' }}>
-                      <td style={{ padding: '0.7rem 1rem', fontFamily: 'monospace', color: 'var(--toa-bone)', fontSize: '0.78rem' }}>{e.key}</td>
+                      <td style={{ padding: '0.7rem 1rem', fontFamily: 'monospace', color: 'var(--toa-bone)', fontSize: '0.78rem', wordBreak: 'break-all' }}>{e.ip} <span style={{ color: 'var(--toa-muted)' }}>({e.endpoint})</span></td>
                       <td style={{ padding: '0.7rem 1rem', color: 'var(--toa-ember)' }}>{e.count}</td>
                       <td style={{ padding: '0.7rem 1rem', color: 'var(--toa-muted)' }}>{fmtRemaining(e.remaining)}</td>
                     </tr>
