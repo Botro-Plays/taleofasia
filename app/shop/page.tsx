@@ -77,6 +77,26 @@ export default function ShopPage() {
     return () => clearTimeout(id);
   }, [fetchItems, fetchVP, fetchConfig]);
 
+  // Real-time updates: poll every 30s and refresh on tab focus
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchItems();
+      if (status === 'authenticated') fetchVP();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchItems, fetchVP, status]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        fetchItems();
+        if (status === 'authenticated') fetchVP();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [fetchItems, fetchVP, status]);
+
   const handlePurchase = async (item: ShopItem) => {
     if (status !== 'authenticated') {
       router.push('/login');

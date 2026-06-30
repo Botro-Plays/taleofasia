@@ -67,6 +67,7 @@ export default function AdminShopPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [adding, setAdding] = useState<number | null>(null);
   const [updating, setUpdating] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [defaultPrice, setDefaultPrice] = useState('10');
   // Track edited prices separately to avoid stale-closure bug
   const editingPricesRef = useRef<Record<number, number>>({});
@@ -225,7 +226,7 @@ export default function AdminShopPage() {
   };
 
   const removeItem = async (item: ShopItem) => {
-    if (!confirm(`Remove "${item.szItemName}" from the shop?`)) return;
+    setConfirmDeleteId(null);
     setUpdating(item.ShopItemID);
     try {
       const res = await fetch(`/api/admin/shop?shopItemId=${item.ShopItemID}`, { method: 'DELETE' });
@@ -347,7 +348,7 @@ export default function AdminShopPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid var(--toa-border)' }}>
-                    {['Item', 'Type', 'Category', 'Price (VP)', 'Active', 'Actions'].map(h => (
+                    {['Item', 'Type', 'Item Code', 'Price (VP)', 'Active', 'Actions'].map(h => (
                       <th key={h} style={TH_STYLE}>{h}</th>
                     ))}
                   </tr>
@@ -361,7 +362,7 @@ export default function AdminShopPage() {
                           {item.szItemPath}
                         </span>
                       </td>
-                      <td style={{ ...TD_STYLE, color: 'var(--toa-muted)', fontFamily: 'monospace', fontSize: '0.78rem' }}>{item.szLastCategory}</td>
+                      <td style={{ ...TD_STYLE, color: 'var(--toa-muted)', fontFamily: 'monospace', fontSize: '0.75rem' }}>{item.szLastCategory}</td>
                       <td style={{ ...TD_STYLE }}>
                         <input
                           type="number"
@@ -388,14 +389,22 @@ export default function AdminShopPage() {
                         </button>
                       </td>
                       <td style={{ ...TD_STYLE }}>
-                        <button
-                          onClick={() => removeItem(item)}
-                          disabled={updating === item.ShopItemID}
-                          title="Remove from shop"
-                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.25rem' }}
-                        >
-                          <Trash2 size={16} color="var(--toa-danger)" />
-                        </button>
+                        {confirmDeleteId === item.ShopItemID ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem' }}>
+                            <span style={{ color: 'var(--toa-muted)' }}>Remove?</span>
+                            <button onClick={() => removeItem(item)} className="toa-btn toa-btn-sm" style={{ color: 'var(--toa-danger)', padding: '0.15rem 0.4rem', fontSize: '0.72rem', border: '1px solid var(--toa-danger)' }}>Yes</button>
+                            <button onClick={() => setConfirmDeleteId(null)} className="toa-btn toa-btn-ghost toa-btn-sm" style={{ padding: '0.15rem 0.4rem', fontSize: '0.72rem' }}>No</button>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmDeleteId(item.ShopItemID)}
+                            disabled={updating === item.ShopItemID}
+                            title="Remove from shop"
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.25rem' }}
+                          >
+                            <Trash2 size={16} color="var(--toa-danger)" />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -446,7 +455,7 @@ export default function AdminShopPage() {
           </div>
 
           {searchLoading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--toa-muted)' }}>Searching…</div>
+            <div className="toa-loading" style={{ padding: '2rem' }}>Searching…</div>
           ) : searchResults.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--toa-muted)' }}>No items found.</div>
           ) : (
@@ -458,7 +467,7 @@ export default function AdminShopPage() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid var(--toa-border)' }}>
-                      {['Item', 'Type', 'Category', 'Status', 'Action'].map(h => (
+                      {['Item', 'Type', 'Item Code', 'Status', 'Action'].map(h => (
                         <th key={h} style={TH_STYLE}>{h}</th>
                       ))}
                     </tr>
