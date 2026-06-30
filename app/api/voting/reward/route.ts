@@ -16,35 +16,40 @@ export async function POST(request: NextRequest) {
     }
 
     const username = session.user.id;
+    if (!username) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    // Fetch all unclaimed votes
-    const voteCheck = await webDB.query(`
-      SELECT LogID
-      FROM VoteLogs
+    // Get reward config first
+    const rewardConfig = await webDB.query(`
+      SELECT ConfigKey, ConfigValue FROM WebsiteConfigs 
+      WHERE ConfigKey = 'vote_reward_vp'
+    `);
+    const configMap: Record<string, string> = {};
+    rewardConfig.recordset.forEach((r: any) => { configMap[r.ConfigKey] = r.ConfigValue; });
+    const rewardPerVote = Math.max(1, parseInt(configMap['vote_reward_vp'] || '5', 10));
+
+    // STEP 1: Atomically mark all unclaimed votes as claimed FIRST.
+    // This prevents race conditions where two concurrent requests both see
+    // unclaimed votes and both award VP before either marks them claimed.
+    const claimResult = await webDB.query(`
+      UPDATE VoteLogs
+      SET RewardClaimed = 1, RewardClaimedAt = GETDATE()
       WHERE AccountName = @username AND RewardClaimed = 0
-      ORDER BY VoteTime ASC
     `, { username });
 
-    if (voteCheck.recordset.length === 0) {
+    const claimedCount = claimResult.rowsAffected[0];
+    if (claimedCount === 0) {
       return NextResponse.json(
         { error: 'No pending vote found. Please vote first.' },
         { status: 400 }
       );
     }
 
-    const unclaimedCount = voteCheck.recordset.length;
+    const totalReward = rewardPerVote * claimedCount;
 
-    // Get reward amount from config
-    const rewardConfig = await webDB.query(`
-      SELECT ConfigKey, ConfigValue FROM WebsiteConfigs 
-      WHERE ConfigKey IN ('vote_reward_vp', 'vote_reward_cooldown_hours')
-    `);
-    const configMap: Record<string, string> = {};
-    rewardConfig.recordset.forEach((r: any) => { configMap[r.ConfigKey] = r.ConfigValue; });
-    const rewardPerVote = parseInt(configMap['vote_reward_vp'] || '5');
-    const totalReward = rewardPerVote * unclaimedCount;
-
-    // Award Vote Points to user (upsert)
+    // STEP 2: Award Vote Points (upsert). Votes are already marked, so if this
+    // fails VP is lost but votes won't re-award — admin can manually correct.
     await webDB.query(`
       MERGE WebVotePoints AS t
       USING (SELECT @username AS AccountName) AS s
@@ -53,30 +58,13 @@ export async function POST(request: NextRequest) {
         UPDATE SET VotePoints = VotePoints + @reward, TotalEarned = TotalEarned + @reward, UpdatedAt = GETDATE()
       WHEN NOT MATCHED THEN
         INSERT (AccountName, VotePoints, TotalEarned) VALUES (@username, @reward, @reward);
-    `, {
-      reward: totalReward,
-      username,
-    });
-
-    // Atomically mark all unclaimed votes as claimed
-    const claimResult = await webDB.query(`
-      UPDATE VoteLogs
-      SET RewardClaimed = 1, RewardClaimedAt = GETDATE()
-      WHERE AccountName = @username AND RewardClaimed = 0
-    `, { username });
-
-    if (claimResult.rowsAffected[0] === 0) {
-      return NextResponse.json(
-        { error: 'Reward already claimed. Please vote again.' },
-        { status: 400 }
-      );
-    }
+    `, { reward: totalReward, username });
 
     // Log the reward
     await logApi({
       action: 'ADMIN_ACTION',
       account: username,
-      details: `VOTE_REWARD: Awarded ${totalReward} VP for ${unclaimedCount} vote${unclaimedCount !== 1 ? 's' : ''}`,
+      details: `VOTE_REWARD: Awarded ${totalReward} VP for ${claimedCount} vote${claimedCount !== 1 ? 's' : ''}`,
       ip: request.headers.get('x-forwarded-for') || '127.0.0.1',
     });
 
@@ -90,10 +78,10 @@ export async function POST(request: NextRequest) {
     const newBalance = vpResult.recordset[0]?.VotePoints ?? 0;
 
     return NextResponse.json({
-      message: `Successfully claimed ${totalReward} VP from ${unclaimedCount} vote${unclaimedCount !== 1 ? 's' : ''}!`,
+      message: `Successfully claimed ${totalReward} VP from ${claimedCount} vote${claimedCount !== 1 ? 's' : ''}!`,
       reward: totalReward,
       votePoints: newBalance,
-      votesClaimed: unclaimedCount,
+      votesClaimed: claimedCount,
     });
   } catch (error) {
     await logError({ where: 'voting/reward', error, account: undefined, ip: '127.0.0.1' });

@@ -12,14 +12,21 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const search = (searchParams.get('search') || '').trim();
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const pageSize = parseInt(searchParams.get('pageSize') || '50', 10);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const pageSize = Math.min(100, Math.max(10, parseInt(searchParams.get('pageSize') || '50', 10)));
+    const pathFilter = searchParams.get('pathFilter') || '';
     const offset = (page - 1) * pageSize;
+
+    // Only allow valid path values
+    const allowedPaths = ['Event', 'Premium'];
+    const pathClause = allowedPaths.includes(pathFilter)
+      ? `szItemPath = '${pathFilter}'`
+      : `szItemPath IN ('Event', 'Premium')`;
 
     let query = `
       SELECT sItemID, szItemName, szLastCategory, szItemPath, iLevel
       FROM ItemList
-      WHERE szItemPath IN ('Event', 'Premium')
+      WHERE ${pathClause}
     `;
     const params: Record<string, any> = {};
 

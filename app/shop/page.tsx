@@ -24,6 +24,7 @@ export default function ShopPage() {
   const [items, setItems] = useState<ShopItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [votePoints, setVotePoints] = useState(0);
+  const [voteSiteId, setVoteSiteId] = useState('1132379076');
   const [purchasing, setPurchasing] = useState<number | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -57,13 +58,24 @@ export default function ShopPage() {
     }
   }, [status]);
 
+  const fetchConfig = useCallback(async () => {
+    try {
+      const res = await fetch('/api/public/config', { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.voting?.siteId) setVoteSiteId(data.voting.siteId);
+      }
+    } catch { /* keep default */ }
+  }, []);
+
   useEffect(() => {
     const id = setTimeout(() => {
       fetchItems();
       fetchVP();
+      fetchConfig();
     }, 0);
     return () => clearTimeout(id);
-  }, [fetchItems, fetchVP]);
+  }, [fetchItems, fetchVP, fetchConfig]);
 
   const handlePurchase = async (item: ShopItem) => {
     if (status !== 'authenticated') {
@@ -217,7 +229,7 @@ export default function ShopPage() {
             </div>
           </div>
           <a
-            href={`https://www.xtremetop100.com/in.php?site=1132379076&postback=${encodeURIComponent(session?.user?.name || '')}`}
+            href={`https://www.xtremetop100.com/in.php?site=${voteSiteId}&postback=${encodeURIComponent(session?.user?.name || '')}`}
             target="_blank"
             rel="noopener noreferrer"
             className="toa-btn toa-btn-solid toa-btn-sm"

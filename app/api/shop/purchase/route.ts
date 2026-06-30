@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { webDB, logDB } from '@/lib/db';
-import { invalidate } from '@/lib/cache';
 
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const username = session?.user?.name || session?.user?.id || '';
+    if (!username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const username = session.user.id;
     const body = await request.json();
     const shopItemId = Number(body?.shopItemId);
 
-    if (!Number.isFinite(shopItemId)) {
+    if (!Number.isInteger(shopItemId) || shopItemId < 1) {
       return NextResponse.json({ error: 'Invalid shop item ID' }, { status: 400 });
     }
 
@@ -91,10 +90,6 @@ export async function POST(request: NextRequest) {
       // VP already deducted, purchase recorded — item will need manual delivery
       // Don't refund — admin can see undelivered purchases
     }
-
-    // Invalidate caches
-    invalidate('shop_items_public');
-    invalidate(`votelogs:${username}`);
 
     // Fetch updated VP balance
     const updatedVP = await webDB.query(`

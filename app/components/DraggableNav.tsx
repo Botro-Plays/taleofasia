@@ -84,7 +84,7 @@ export function DraggableNav({ customPages }: { customPages: Array<{ Slug: strin
 
   const isActive = (href: string): boolean => {
     if (href === '/dashboard') {
-      return pathname === '/dashboard' || pathname.startsWith('/dashboard/') || pathname.startsWith('/admin');
+      return pathname === '/dashboard' || pathname.startsWith('/dashboard/') || pathname.startsWith('/admin') || pathname === '/shop' || pathname.startsWith('/shop/');
     }
     if (href === '/') return pathname === '/';
     return pathname === href || pathname.startsWith(href + '/');

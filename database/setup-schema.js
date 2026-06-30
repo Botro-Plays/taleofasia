@@ -158,6 +158,11 @@ async function setupDatabase() {
       END
     `);
     console.log('VoteLogs table ready');
+    // Migration guard: add RewardClaimedAt if table predates this column
+    await sql.query(`
+      IF NOT EXISTS (SELECT * FROM sys.columns WHERE name = 'RewardClaimedAt' AND object_id = OBJECT_ID('VoteLogs'))
+        ALTER TABLE VoteLogs ADD RewardClaimedAt DATETIME NULL;
+    `);
 
     // Create AdminUsers table
     await sql.query(`
