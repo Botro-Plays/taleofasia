@@ -10,8 +10,10 @@ import { ChevronLeft, RefreshCw, Trash2, ShieldOff, Shield } from 'lucide-react'
 interface RateEntry {
   key: string;
   count: number;
+  limit: number;
   resetTime: number;
   remaining: number;
+  isBlocked: boolean;
 }
 
 interface BlockEvent {
@@ -73,8 +75,9 @@ export default function RateLimitsPage() {
     }
   };
 
-  const blockedRegister = entries.filter(e => e.key.includes('auth-register'));
-  const blockedOther = entries.filter(e => !e.key.includes('auth-register'));
+  const registerEntries = entries.filter(e => e.key.includes('auth-register'));
+  const blockedRegister = registerEntries.filter(e => e.isBlocked);
+  const blockedOther = entries.filter(e => !e.key.includes('auth-register') && e.isBlocked);
   const registerEvents = events.filter(e => e.key === 'auth-register');
 
   if (status === 'loading' || loading) {
@@ -110,10 +113,10 @@ export default function RateLimitsPage() {
         {/* Summary stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
           {[
-            { label: 'Blocked IPs (Register)', value: blockedRegister.length, color: blockedRegister.length > 0 ? 'var(--toa-warning)' : 'var(--toa-success)' },
-            { label: 'Blocked IPs (Other)', value: blockedOther.length, color: blockedOther.length > 0 ? 'var(--toa-ember)' : 'var(--toa-success)' },
-            { label: 'Total Active Limits', value: entries.length, color: 'var(--toa-info)' },
-            { label: 'Recent Block Events', value: registerEvents.length, color: 'var(--toa-muted)' },
+            { label: 'Blocked (Register)', value: blockedRegister.length, color: blockedRegister.length > 0 ? 'var(--toa-warning)' : 'var(--toa-success)' },
+            { label: 'Blocked (Other)', value: blockedOther.length, color: blockedOther.length > 0 ? 'var(--toa-ember)' : 'var(--toa-success)' },
+            { label: 'Active Trackers', value: entries.length, color: 'var(--toa-info)' },
+            { label: 'Block Events (session)', value: registerEvents.length, color: 'var(--toa-muted)' },
           ].map(({ label, value, color }) => (
             <div key={label} className="toa-seal-card" style={{ padding: '1.25rem' }}>
               <div className="toa-seal-corner toa-seal-corner-tl" />
@@ -135,10 +138,11 @@ export default function RateLimitsPage() {
             <ShieldOff size={14} />
             Flush Registration Blocks ({blockedRegister.length})
           </button>
+
           <button
             className="toa-btn toa-btn-ghost toa-btn-sm"
             onClick={() => void flush()}
-            disabled={flushing || entries.length === 0}
+            disabled={flushing || blockedRegister.length + blockedOther.length === 0}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', borderColor: 'var(--toa-ember)', color: 'var(--toa-ember)' }}
           >
             <Trash2 size={14} />
@@ -157,27 +161,32 @@ export default function RateLimitsPage() {
         </div>
 
         {/* Currently blocked — Registration */}
-        <div className="toa-label" style={{ marginBottom: '0.75rem' }}>Currently Blocked — Registration</div>
+        <div className="toa-label" style={{ marginBottom: '0.75rem' }}>Registration Trackers (limit: 50/hr)</div>
         <div className="toa-seal-card" style={{ padding: 0, marginBottom: '2rem', overflow: 'hidden' }}>
-          {blockedRegister.length === 0 ? (
+          {registerEntries.length === 0 ? (
             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--toa-muted)', fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-              <Shield size={14} /> No IPs currently blocked for registration
+              <Shield size={14} /> No active registration trackers
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(184,155,94,0.15)' }}>
-                  {['IP Address', 'Attempts', 'Resets In'].map(h => (
+                  {['IP Address', 'Attempts / Limit', 'Resets In', 'Status'].map(h => (
                     <th key={h} style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--toa-muted)', fontWeight: 600 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {blockedRegister.map((e, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid rgba(184,155,94,0.07)' }}>
+                {registerEntries.map((e, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid rgba(184,155,94,0.07)', background: e.isBlocked ? 'rgba(199,80,48,0.04)' : undefined }}>
                     <td style={{ padding: '0.7rem 1rem', fontFamily: 'monospace', color: 'var(--toa-bone)' }}>{e.key.split(':')[0]}</td>
-                    <td style={{ padding: '0.7rem 1rem', color: 'var(--toa-warning)' }}>{e.count}</td>
+                    <td style={{ padding: '0.7rem 1rem', color: e.isBlocked ? 'var(--toa-danger)' : 'var(--toa-bone)' }}>{e.count} / {e.limit}</td>
                     <td style={{ padding: '0.7rem 1rem', color: 'var(--toa-muted)' }}>{fmtRemaining(e.remaining)}</td>
+                    <td style={{ padding: '0.7rem 1rem' }}>
+                      {e.isBlocked
+                        ? <span style={{ fontSize: '0.7rem', background: 'rgba(199,80,48,0.15)', color: 'var(--toa-danger)', padding: '0.2rem 0.5rem', borderRadius: 3 }}>BLOCKED</span>
+                        : <span style={{ fontSize: '0.7rem', background: 'rgba(58,125,68,0.15)', color: 'var(--toa-success)', padding: '0.2rem 0.5rem', borderRadius: 3 }}>OK</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
