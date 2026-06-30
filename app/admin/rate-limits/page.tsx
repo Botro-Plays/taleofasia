@@ -56,7 +56,7 @@ export default function RateLimitsPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') { router.push('/login'); return; }
-    if (status === 'authenticated') void load();
+    if (status === 'authenticated') { const id = setTimeout(() => { void load(); }, 0); return () => clearTimeout(id); }
   }, [status, router, load]);
 
   const flush = async (filter?: string) => {
