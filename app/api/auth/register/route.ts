@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
       VALUES (@username, 'REGISTER', 'User registered successfully', @ip)
     `, {
       username,
-      ip: request.headers.get('x-forwarded-for') || '127.0.0.1'
+      ip: ip.substring(0, 50),
     });
 
     // Generate verification token and store in WebDB
