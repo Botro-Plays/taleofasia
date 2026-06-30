@@ -100,7 +100,7 @@ export default function AdminShopPage() {
       const params = new URLSearchParams({ page: String(page), pageSize: '50', filter });
       const res = await fetch(`/api/admin/shop/stats?${params}`, { cache: 'no-store' });
       const data = await res.json();
-      setStats(data);
+      if (res.ok) setStats(data); else setStats(null);
     } catch (e) {
       console.error('Failed to fetch stats:', e);
     } finally {

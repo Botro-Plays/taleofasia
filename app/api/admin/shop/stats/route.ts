@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       SELECT
         COUNT(*) AS totalPurchases,
         ISNULL(SUM(PriceVP), 0) AS totalVPSpent,
-        SUM(CASE WHEN Delivered = 0 THEN 1 ELSE 0 END) AS undelivered
+        ISNULL(SUM(CASE WHEN Delivered = 0 THEN 1 ELSE 0 END), 0) AS undelivered
       FROM WebShopPurchases
     `);
     const summary = summaryResult.recordset[0] || { totalPurchases: 0, totalVPSpent: 0, undelivered: 0 };
@@ -55,11 +55,13 @@ export async function GET(request: NextRequest) {
     const total = countResult.recordset[0].total;
 
     const purchasesResult = await webDB.query(`
-      SELECT PurchaseID, AccountName, szItemName, szItemPath, PriceVP,
-             PurchasedAt, Delivered, DeliveredAt
-      FROM WebShopPurchases
-      ${whereClause}
-      ORDER BY PurchasedAt DESC
+      SELECT p.PurchaseID, p.AccountName, p.szItemName,
+             ISNULL(si.szItemPath, '') AS szItemPath,
+             p.PriceVP, p.PurchasedAt, p.Delivered, p.DeliveredAt
+      FROM WebShopPurchases p
+      LEFT JOIN WebShopItems si ON p.ShopItemID = si.ShopItemID
+      ${whereClause.replace('WHERE Delivered', 'WHERE p.Delivered')}
+      ORDER BY p.PurchasedAt DESC
       OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY
     `, {
       offset,
