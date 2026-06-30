@@ -471,7 +471,7 @@ export default function ShopPage() {
 
           {potionItems.length > 0 && (
             <>
-              <div className="toa-label" style={{ marginBottom: '1rem' }}>Potion Items</div>
+              <div className="toa-label" style={{ marginBottom: '1rem' }}>Miscellaneous Items</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
                 {potionItems.map(renderItemCard)}
               </div>
