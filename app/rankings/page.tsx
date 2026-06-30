@@ -321,6 +321,11 @@ export default function RankingsPage() {
         return <span>{formatDate(player.Date)}</span>;
       case 'BellatraDate':
         return <span>{formatDate(player.BellatraDate)}</span>;
+      case 'RebornStage':
+        if (!player.RebornStage || player.RebornStage === 0) {
+          return <span style={{ opacity: 0.5, fontStyle: 'italic' }}>Not yet</span>;
+        }
+        return <span>{player.RebornStage}</span>;
       default:
         const value = player[key as keyof RankingPlayer];
         return value !== undefined ? (
@@ -493,7 +498,7 @@ export default function RankingsPage() {
                     <div className="grid grid-cols-3 gap-1">
                       {selectedSubType !== 'clan' && player.Level !== undefined && <p className="toa-rank-card-stat">Lv <span>{player.Level}</span></p>}
                       {selectedSubType !== 'clan' && player.ClanName && <p className="toa-rank-card-stat">Clan <span>{player.ClanName}</span></p>}
-                      {selectedType === 'level' && player.RebornStage !== undefined && <p className="toa-rank-card-stat">Reborn <span>{player.RebornStage}</span></p>}
+                      {selectedType === 'level' && player.RebornStage !== undefined && <p className="toa-rank-card-stat">Reborn <span>{(!player.RebornStage || player.RebornStage === 0) ? 'Not yet' : player.RebornStage}</span></p>}
                       {(selectedType === 'pvp' || selectedType === 'battle-royale') && player.Experience !== undefined && <p className="toa-rank-card-stat">EXP <span>{player.Experience.toLocaleString()}</span></p>}
                       {(selectedType === 'pvp' || selectedType === 'battle-royale') && <p className="toa-rank-card-stat">Kills <span>{(player.Kills ?? player.PVPKills ?? 0).toLocaleString()}</span></p>}
                       {(selectedType === 'pvp' || selectedType === 'battle-royale') && <p className="toa-rank-card-stat">Deaths <span>{(player.Deaths ?? player.PVPDeaths ?? 0).toLocaleString()}</span></p>}
