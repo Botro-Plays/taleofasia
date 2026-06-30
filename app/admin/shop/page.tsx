@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PageShell } from '@/app/components/PageShell';
-import { Search, X, Trash2, Plus, Eye, EyeOff, ExternalLink, CheckCircle, AlertCircle, Package, BarChart2, AlertTriangle } from 'lucide-react';
+import { Search, X, Trash2, Plus, Eye, EyeOff, ExternalLink, CheckCircle, AlertCircle, Package, BarChart2, AlertTriangle, GripVertical } from 'lucide-react';
 
 interface ShopItem {
   ShopItemID: number;
@@ -71,6 +71,9 @@ export default function AdminShopPage() {
   const [defaultPrice, setDefaultPrice] = useState('10');
   // Track edited prices separately to avoid stale-closure bug
   const editingPricesRef = useRef<Record<number, number>>({});
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
+  const [reordering, setReordering] = useState(false);
 
   // ── Purchases state ──
   const [stats, setStats] = useState<PurchaseStats | null>(null);
@@ -256,6 +259,82 @@ export default function AdminShopPage() {
     }
   };
 
+  const handleDragStart = (shopItemId: number) => {
+    setDraggedId(shopItemId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, shopItemId: number) => {
+    e.preventDefault();
+    if (draggedId !== null && draggedId !== shopItemId) {
+      setDragOverId(shopItemId);
+    }
+  };
+
+  const handleDrop = async (targetId: number) => {
+    if (draggedId === null || draggedId === targetId) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    const draggedIndex = catalogItems.findIndex(i => i.ShopItemID === draggedId);
+    const targetIndex = catalogItems.findIndex(i => i.ShopItemID === targetId);
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+
+    // Reorder the catalogItems array
+    const reordered = [...catalogItems];
+    const [moved] = reordered.splice(draggedIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    // Build the full shopItems list with new SortOrder values
+    // Items not in the current filter keep their existing SortOrder
+    const reorderedIds = new Set(reordered.map(i => i.ShopItemID));
+    const others = shopItems.filter(i => !reorderedIds.has(i.ShopItemID));
+    const allReordered = [...reordered, ...others];
+
+    const itemsPayload = allReordered.map((item, idx) => ({
+      shopItemId: item.ShopItemID,
+      sortOrder: idx,
+    }));
+
+    // Optimistically update local state
+    setShopItems(prev => {
+      const updated = [...prev];
+      updated.sort((a, b) => {
+        const aIdx = allReordered.findIndex(r => r.ShopItemID === a.ShopItemID);
+        const bIdx = allReordered.findIndex(r => r.ShopItemID === b.ShopItemID);
+        return aIdx - bIdx;
+      });
+      return updated;
+    });
+
+    setDraggedId(null);
+    setDragOverId(null);
+    setReordering(true);
+    try {
+      const res = await fetch('/api/admin/shop', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: itemsPayload }),
+      });
+      if (res.ok) {
+        showToast('Order updated');
+      } else {
+        showToast('Failed to save order', 'error');
+        await fetchShopItems();
+      }
+    } catch {
+      showToast('Failed to save order', 'error');
+      await fetchShopItems();
+    } finally {
+      setReordering(false);
+    }
+  };
+
   if (status === 'loading' || (loading && !isAdmin)) {
     return (
       <PageShell label="Management" title="Web Shop" backHref="/admin" backLabel="Admin">
@@ -353,6 +432,13 @@ export default function AdminShopPage() {
             </div>
           </div>
 
+          {catalogItems.length > 0 && (
+            <div style={{ fontSize: '0.72rem', color: 'var(--toa-muted)', marginBottom: '0.5rem' }}>
+              <GripVertical size={11} style={{ verticalAlign: 'middle', marginRight: '0.25rem' }} />
+              Drag rows to reorder — the public shop displays items in this order.
+            </div>
+          )}
+
           {catalogItems.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--toa-muted)', marginBottom: '2rem' }}>
               {shopItems.length === 0 ? 'No items in the shop yet. Add items from the search below.' : `No ${catalogFilter} items in the shop.`}
@@ -362,14 +448,31 @@ export default function AdminShopPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.84rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid var(--toa-border)' }}>
-                    {['Item', 'Type', 'Item Code', 'Price (VP)', 'Active', 'Actions'].map(h => (
+                    {['', 'Item', 'Type', 'Item Code', 'Price (VP)', 'Active', 'Actions'].map(h => (
                       <th key={h} style={TH_STYLE}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {catalogItems.map((item) => (
-                    <tr key={item.ShopItemID} style={{ borderBottom: '1px solid var(--toa-border)' }}>
+                    <tr
+                      key={item.ShopItemID}
+                      draggable
+                      onDragStart={() => handleDragStart(item.ShopItemID)}
+                      onDragOver={(e) => handleDragOver(e, item.ShopItemID)}
+                      onDragEnd={() => { setDraggedId(null); setDragOverId(null); }}
+                      onDrop={() => handleDrop(item.ShopItemID)}
+                      style={{
+                        borderBottom: '1px solid var(--toa-border)',
+                        cursor: reordering ? 'wait' : 'grab',
+                        opacity: draggedId === item.ShopItemID ? 0.4 : 1,
+                        background: dragOverId === item.ShopItemID ? 'rgba(184,155,94,0.08)' : 'transparent',
+                        transition: 'background 0.15s',
+                      }}
+                    >
+                      <td style={{ ...TD_STYLE, width: '32px', cursor: 'grab' }}>
+                        <GripVertical size={14} color="var(--toa-muted)" />
+                      </td>
                       <td style={{ ...TD_STYLE, color: 'var(--toa-gold-bright)', fontWeight: 600 }}>{item.szItemName}</td>
                       <td style={{ ...TD_STYLE, color: 'var(--toa-muted)' }}>
                         <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', borderRadius: 3, background: item.szItemPath === 'Premium' ? 'rgba(184,155,94,0.12)' : item.szItemPath === 'Potion' ? 'rgba(74,139,58,0.12)' : 'rgba(74,111,165,0.12)', color: item.szItemPath === 'Premium' ? 'var(--toa-gold)' : item.szItemPath === 'Potion' ? 'var(--toa-success)' : 'var(--toa-info)' }}>

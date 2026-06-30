@@ -127,6 +127,34 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
+// PUT — batch reorder items
+export async function PUT(request: NextRequest) {
+  try {
+    const adminUser = await requireAdmin();
+    if (!adminUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await request.json();
+    const { items } = body as { items: { shopItemId: number; sortOrder: number }[] };
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'Missing items array' }, { status: 400 });
+    }
+
+    for (const item of items) {
+      await webDB.query(`
+        UPDATE WebShopItems SET SortOrder = @sortOrder
+        WHERE ShopItemID = @shopItemId
+      `, { sortOrder: item.sortOrder, shopItemId: item.shopItemId });
+    }
+
+    invalidate('shop_items_public');
+    return NextResponse.json({ message: 'Order updated' });
+  } catch (error) {
+    console.error('[admin/shop PUT]', error);
+    return NextResponse.json({ error: 'Failed to reorder items' }, { status: 500 });
+  }
+}
+
 // DELETE — remove item from shop
 export async function DELETE(request: NextRequest) {
   try {
