@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { gameDB, webDB } from '@/lib/db';
+import { cached } from '@/lib/cache';
 import { buildCategorySQL, MAIN_CATEGORIES, getItemType } from '@/lib/item-types';
 
 const ITEM_QUERY = `
@@ -57,79 +58,83 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get('category') || '';
     const search = searchParams.get('search') || '';
-
-    // Get visible items from WebDB (composite key: sItemID + szItemName)
-    const visResult = await webDB.query(
-      'SELECT sItemID, szItemName FROM ItemVisibility WHERE IsVisible = 1'
-    );
-    const visibleKeys = new Set(visResult.recordset.map((r: any) => `${r.sItemID}|${r.szItemName}`));
-
-    if (visibleKeys.size === 0) {
-      return NextResponse.json({ items: [], categories: [] });
-    }
-
-    // Build query with optional category filter
-    let query = ITEM_QUERY;
-    const params: Record<string, any> = {};
-
-    // Add visibility filter using composite key
-    // We filter in JS since SQL doesn't support composite IN easily
     const sub = searchParams.get('sub') || '';
-    if (category) {
-      const { clause, params: catParams } = buildCategorySQL(category, sub || undefined);
-      query += clause;
-      Object.assign(params, catParams);
-    }
 
-    // Add search filter
-    if (search) {
-      query += ` AND szItemName LIKE @search`;
-      params.search = `%${search}%`;
-    }
+    const cacheKey = `items:${category}:${sub}:${search}`;
+    const data = await cached(cacheKey, 60_000, async () => {
+      // Get visible items from WebDB (composite key: sItemID + szItemName)
+      const visResult = await webDB.query(
+        'SELECT sItemID, szItemName FROM ItemVisibility WHERE IsVisible = 1'
+      );
+      const visibleKeys = new Set(visResult.recordset.map((r: any) => `${r.sItemID}|${r.szItemName}`));
 
-    query += ` ORDER BY szLastCategory, iLevel, szItemName`;
-
-    const result = await gameDB.query(query, params);
-
-    // Filter by visibility using composite key (sItemID + szItemName)
-    const allItems = result.recordset.filter((item: any) =>
-      visibleKeys.has(`${item.sItemID}|${item.szItemName}`)
-    );
-
-    // Build sub-category counts for the active main category
-    let subCategories: Array<{ key: string; label: string; count: number }> = [];
-    if (category) {
-      const mainCat = MAIN_CATEGORIES.find(c => c.key === category);
-      if (mainCat) {
-        subCategories = mainCat.subs.map((sub) => {
-          const count = allItems.filter((item: any) => {
-            const typeInfo = getItemType(item.szLastCategory);
-            return typeInfo?.sub?.toLowerCase() === sub.key;
-          }).length;
-          return { key: sub.key, label: sub.label, count };
-        });
+      if (visibleKeys.size === 0) {
+        return { items: [], mainCategories: MAIN_CATEGORIES.map(c => ({ key: c.key, label: c.label, subs: c.subs.map(s => ({ key: s.key, label: s.label })) })), subCategories: [] };
       }
-    }
 
-    const items = allItems.map((item: any) => {
-      const typeInfo = getItemType(item.szLastCategory);
+      // Build query with optional category filter
+      let query = ITEM_QUERY;
+      const params: Record<string, any> = {};
+
+      // Add category filter
+      if (category) {
+        const { clause, params: catParams } = buildCategorySQL(category, sub || undefined);
+        query += clause;
+        Object.assign(params, catParams);
+      }
+
+      // Add search filter
+      if (search) {
+        query += ` AND szItemName LIKE @search`;
+        params.search = `%${search}%`;
+      }
+
+      query += ` ORDER BY szLastCategory, iLevel, szItemName`;
+
+      const result = await gameDB.query(query, params);
+
+      // Filter by visibility using composite key (sItemID + szItemName)
+      const allItems = result.recordset.filter((item: any) =>
+        visibleKeys.has(`${item.sItemID}|${item.szItemName}`)
+      );
+
+      // Build sub-category counts for the active main category
+      let subCategories: Array<{ key: string; label: string; count: number }> = [];
+      if (category) {
+        const mainCat = MAIN_CATEGORIES.find(c => c.key === category);
+        if (mainCat) {
+          subCategories = mainCat.subs.map((sub) => {
+            const count = allItems.filter((item: any) => {
+              const typeInfo = getItemType(item.szLastCategory);
+              return typeInfo?.sub?.toLowerCase() === sub.key;
+            }).length;
+            return { key: sub.key, label: sub.label, count };
+          });
+        }
+      }
+
+      const items = allItems.map((item: any) => {
+        const typeInfo = getItemType(item.szLastCategory);
+        return {
+          ...item,
+          mainCategory: typeInfo?.main || 'other',
+          subCategory: typeInfo?.sub || 'Other',
+          imageUrl: `/items/it${item.szLastCategory.toLowerCase()}.png`,
+        };
+      });
+
       return {
-        ...item,
-        mainCategory: typeInfo?.main || 'other',
-        subCategory: typeInfo?.sub || 'Other',
-        imageUrl: `/items/it${item.szLastCategory.toLowerCase()}.png`,
+        items,
+        mainCategories: MAIN_CATEGORIES.map(c => ({
+          key: c.key,
+          label: c.label,
+          subs: c.subs.map(s => ({ key: s.key, label: s.label })),
+        })),
+        subCategories,
       };
     });
 
-    return NextResponse.json({
-      items,
-      mainCategories: MAIN_CATEGORIES.map(c => ({
-        key: c.key,
-        label: c.label,
-        subs: c.subs.map(s => ({ key: s.key, label: s.label })),
-      })),
-      subCategories,
-    });
+    return NextResponse.json(data);
   } catch (error: any) {
     console.error('[API /items] Error:', error);
     return NextResponse.json(

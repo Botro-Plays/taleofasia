@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth/config';
 import { webDB, gameDB } from '@/lib/db';
 import { checkAdminPrivileges } from '@/lib/auth/admin';
 import { buildCategorySQL } from '@/lib/item-types';
+import { invalidate } from '@/lib/cache';
 
 export async function PATCH(req: Request) {
   try {
@@ -55,6 +56,8 @@ export async function PATCH(req: Request) {
       szItemPath: item.szItemPath,
       szLastCategory: item.szLastCategory,
     });
+
+    invalidate('items:');
 
     return NextResponse.json({ success: true, sItemID, szItemName, isVisible });
   } catch (error: any) {
@@ -119,6 +122,8 @@ export async function PUT(req: Request) {
         szLastCategory: item.szLastCategory,
       });
     }
+
+    invalidate('items:');
 
     return NextResponse.json({
       success: true,

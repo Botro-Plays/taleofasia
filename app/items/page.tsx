@@ -321,9 +321,7 @@ export default function ItemsPage() {
 
         {/* Items grid */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--toa-muted)' }}>
-            Loading items...
-          </div>
+          <div className="toa-loading">Loading items…</div>
         ) : items.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--toa-muted)' }}>
             No items found. {items.length === 0 && subCategories.length === 0 && 'An admin needs to make items visible first.'}
