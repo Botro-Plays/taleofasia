@@ -123,9 +123,9 @@ export default function ShopPage() {
 
   useEffect(() => {
     const lastVote = votingLogs.length > 0 ? new Date(votingLogs[0].VoteTime).getTime() : null;
-    if (!lastVote) { setInCooldown(false); setCountdown(''); return; }
-    const nextAt = lastVote + voteConfig.cooldownHours * 3600 * 1000;
+    const nextAt = lastVote ? lastVote + voteConfig.cooldownHours * 3600 * 1000 : null;
     const tick = () => {
+      if (!nextAt) { setInCooldown(false); setCountdown(''); return; }
       const remaining = nextAt - Date.now();
       if (remaining <= 0) { setInCooldown(false); setCountdown(''); return; }
       setInCooldown(true);
