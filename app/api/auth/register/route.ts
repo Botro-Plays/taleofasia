@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { userDB, webDB } from '@/lib/db';
 import { sendVerificationEmail } from '@/lib/mail';
-import { rateLimiter, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { rateLimiter, getClientIP, rateLimitResponse, recordBlock } from '@/lib/rate-limit';
 import { isRecaptchaEnabled, verifyRecaptchaToken } from '@/lib/recaptcha';
 import crypto from 'crypto';
 
@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
   const limit = rateLimiter.check(ip, 'auth-register', 50, 60 * 60 * 1000);
   if (!limit.allowed) {
     console.warn(`[register] Rate limit hit for IP: ${ip}, retry after ${limit.retryAfter}s`);
+    recordBlock(ip, 'auth-register', limit.retryAfter);
     return rateLimitResponse(limit.retryAfter);
   }
 
