@@ -525,7 +525,7 @@ export default function RankingsPage() {
         )}
 
         {/* ── Pagination ── */}
-        {(page > 1 || hasMore) && (
+        {(page > 1 || (hasMore && page < 2)) && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -535,10 +535,10 @@ export default function RankingsPage() {
             >← Prev</button>
             <span style={{ fontFamily: 'var(--toa-font-display)', fontSize: '0.65rem', letterSpacing: '0.2em', color: 'var(--toa-muted)', textTransform: 'uppercase' }}>Page {page}</span>
             <button
-              onClick={() => setPage((p) => (hasMore ? p + 1 : p))}
-              disabled={!hasMore || loading}
+              onClick={() => setPage((p) => (hasMore && p < 2 ? p + 1 : p))}
+              disabled={!hasMore || page >= 2 || loading}
               className="toa-btn toa-btn-ghost toa-btn-sm"
-              style={{ opacity: !hasMore || loading ? 0.4 : 1 }}
+              style={{ opacity: !hasMore || page >= 2 || loading ? 0.4 : 1 }}
             >Next →</button>
           </div>
         )}
