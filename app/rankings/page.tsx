@@ -444,13 +444,14 @@ export default function RankingsPage() {
                 </thead>
                 <tbody>
                   {rankings.map((player, index) => {
-                    const medal = RANK_MEDALS[index];
+                    const globalRank = (page - 1) * 50 + index;
+                    const medal = RANK_MEDALS[globalRank];
                     return (
                       <tr key={player.Name || player.ClanName || index}
                         style={medal ? { background: medal.bg, borderLeft: `2px solid ${medal.color}` } : { borderLeft: '2px solid transparent' }}
                       >
                         {getTableColumns().map((col) => (
-                          <td key={col.key}>{getCellValue(player, col.key, index)}</td>
+                          <td key={col.key}>{getCellValue(player, col.key, globalRank)}</td>
                         ))}
                       </tr>
                     );
@@ -464,7 +465,8 @@ export default function RankingsPage() {
             {isMobile && (
               <div style={{ padding: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {rankings.map((player, index) => {
-                const medal = RANK_MEDALS[index];
+                const globalRank = (page - 1) * 50 + index;
+                const medal = RANK_MEDALS[globalRank];
                 return (
                   <div key={player.Name || player.ClanName || index}
                     style={{
@@ -480,7 +482,7 @@ export default function RankingsPage() {
                           fontFamily: 'var(--toa-font-display)', fontWeight: 700,
                           fontSize: '1rem', minWidth: '2rem',
                           color: medal ? medal.color : 'var(--toa-muted)',
-                        }}>#{index + 1}</span>
+                        }}>#{globalRank + 1}</span>
                         {selectedSubType !== 'clan' && (
                           <Image src={`/images/CharClass/${player.JobCode}.png`} alt="Class" width={26} height={26}
                             onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/CharClass/0.png'; }} />
