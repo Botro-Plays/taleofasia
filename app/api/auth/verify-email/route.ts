@@ -54,21 +54,29 @@ export async function GET(request: NextRequest) {
       WHERE AccountName = @username
     `, { username });
 
-    // Mark token as used
-    await webDB.query(`
-      UPDATE ${VERIFY_TABLE}
-      SET Used = 1
-      WHERE Token = @token
-    `, { token });
+    // Mark token as used (non-critical — account is already activated)
+    try {
+      await webDB.query(`
+        UPDATE ${VERIFY_TABLE}
+        SET Used = 1
+        WHERE Token = @token
+      `, { token });
+    } catch (e) {
+      console.error('Failed to mark verification token as used:', e);
+    }
 
-    // Log verification
-    await webDB.query(`
-      INSERT INTO WebAuditLogs (AccountName, Action, Details, IPAddress)
-      VALUES (@username, 'EMAIL_VERIFIED', 'Email verified successfully', @ip)
-    `, {
-      username,
-      ip: request.headers.get('x-forwarded-for') || '127.0.0.1'
-    });
+    // Log verification (non-critical)
+    try {
+      await webDB.query(`
+        INSERT INTO WebAuditLogs (AccountName, Action, Details, IPAddress)
+        VALUES (@username, 'EMAIL_VERIFIED', 'Email verified successfully', @ip)
+      `, {
+        username,
+        ip: request.headers.get('x-forwarded-for') || '127.0.0.1'
+      });
+    } catch (e) {
+      console.error('Failed to log verification audit:', e);
+    }
 
     return NextResponse.json(
       { message: 'Email verified successfully' },
