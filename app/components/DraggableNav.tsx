@@ -250,10 +250,10 @@ export function DraggableNav({ customPages }: { customPages: Array<{ Slug: strin
         className="toa-nav-links"
         style={isVertical ? { flexDirection: 'column', gap: '0.125rem' } : undefined}
       >
-        <Link href="/downloads" className={isActive('/downloads') ? 'toa-nav-cta toa-nav-auth' : 'toa-nav-link'}>Download</Link>
-        <Link href="/rankings" className={isActive('/rankings') ? 'toa-nav-cta toa-nav-auth' : 'toa-nav-link'}>Rankings</Link>
+        <Link href="/downloads" className={isActive('/downloads') ? 'toa-nav-active' : 'toa-nav-link'}>Download</Link>
+        <Link href="/rankings" className={isActive('/rankings') ? 'toa-nav-active' : 'toa-nav-link'}>Rankings</Link>
         <div className="relative group" style={isVertical ? { position: 'relative' } : undefined}>
-          <span className={isActive('/items') || isActive('/info/getting-started') || isActive('/mix-list') ? 'toa-nav-cta toa-nav-auth' : 'toa-nav-link'} style={{ cursor: 'pointer' }}>Guides</span>
+          <span className={isActive('/items') || isActive('/info/getting-started') || isActive('/mix-list') ? 'toa-nav-active' : 'toa-nav-link'} style={{ cursor: 'pointer' }}>Guides</span>
           <div
             className={`invisible opacity-0 group-hover:visible group-hover:opacity-100 absolute ${isVertical ? 'left-full top-0 ml-2' : 'mt-2 left-0'} w-48 bg-[var(--toa-smoke)] border border-[rgba(184,155,94,0.15)] rounded-lg shadow-lg transition-opacity py-1`}
           >
@@ -262,7 +262,7 @@ export function DraggableNav({ customPages }: { customPages: Array<{ Slug: strin
             <Link href="/mix-list" className="block px-4 py-2 text-sm text-[var(--toa-muted)] hover:text-[var(--toa-gold-bright)] hover:bg-[rgba(184,155,94,0.06)] transition-colors">Mix List</Link>
           </div>
         </div>
-        <Link href="/info/server-rules" className={isActive('/info/server-rules') ? 'toa-nav-cta toa-nav-auth' : 'toa-nav-link'}>Rules</Link>
+        <Link href="/info/server-rules" className={isActive('/info/server-rules') ? 'toa-nav-active' : 'toa-nav-link'}>Rules</Link>
         {customPages.length > 0 && (
           <div className="relative group" style={isVertical ? { position: 'relative' } : undefined}>
             <span className="toa-nav-link" style={{ cursor: 'pointer' }}>More</span>
@@ -284,7 +284,7 @@ export function DraggableNav({ customPages }: { customPages: Array<{ Slug: strin
         )}
         {session ? (
           <>
-            <Link href="/dashboard" className={isActive('/dashboard') ? 'toa-nav-cta toa-nav-auth' : 'toa-nav-link toa-nav-auth'}>Dashboard</Link>
+            <Link href="/dashboard" className={isActive('/dashboard') ? 'toa-nav-active' : 'toa-nav-link toa-nav-auth'}>Dashboard</Link>
             <button
               onClick={() => signOut()}
               className="toa-nav-link toa-nav-auth"

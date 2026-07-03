@@ -139,6 +139,18 @@ a:hover { color: var(--toa-gold-bright); }
   background: rgba(184, 155, 94, 0.08);
 }
 
+.toa-nav-active {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--toa-bg);
+  text-decoration: none;
+  padding: 0.5rem 0.875rem;
+  border-radius: 999px;
+  background: var(--toa-gold);
+  letter-spacing: 0.03em;
+  transition: all 0.2s ease;
+}
+
 .toa-nav-cta {
   clip-path: var(--toa-clip-btn-sm);
   background: var(--toa-ember);
