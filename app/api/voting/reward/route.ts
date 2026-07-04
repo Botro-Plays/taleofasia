@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
-import { webDB } from '@/lib/db';
+import { webDB, transaction, txQuery } from '@/lib/db';
 import { invalidate } from '@/lib/cache';
 import { logApi, logError } from '@/lib/logging';
 import { rateLimiter, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
@@ -34,36 +34,44 @@ export async function POST(request: NextRequest) {
     rewardConfig.recordset.forEach((r: any) => { configMap[r.ConfigKey] = r.ConfigValue; });
     const rewardPerVote = Math.max(1, parseInt(configMap['vote_reward_vp'] || '5', 10));
 
-    // STEP 1: Atomically mark all unclaimed votes as claimed FIRST.
-    // This prevents race conditions where two concurrent requests both see
-    // unclaimed votes and both award VP before either marks them claimed.
-    const claimResult = await webDB.query(`
-      UPDATE VoteLogs
-      SET RewardClaimed = 1, RewardClaimedAt = GETDATE()
-      WHERE AccountName = @username AND RewardClaimed = 0
-    `, { username });
+    // Atomically claim votes and award VP in a single transaction
+    const result = await transaction('webDB', async (req) => {
+      // STEP 1: Atomically mark all unclaimed votes as claimed FIRST.
+      const claimResult = await txQuery(req, `
+        UPDATE VoteLogs
+        SET RewardClaimed = 1, RewardClaimedAt = GETDATE()
+        WHERE AccountName = @username AND RewardClaimed = 0
+      `, { username });
 
-    const claimedCount = claimResult.rowsAffected[0];
-    if (claimedCount === 0) {
+      const claimedCount = claimResult.rowsAffected[0];
+      if (claimedCount === 0) {
+        return { claimedCount: 0, totalReward: 0 };
+      }
+
+      const totalReward = rewardPerVote * claimedCount;
+
+      // STEP 2: Award Vote Points (upsert) in same transaction
+      await txQuery(req, `
+        MERGE WebVotePoints AS t
+        USING (SELECT @username AS AccountName) AS s
+        ON t.AccountName = s.AccountName
+        WHEN MATCHED THEN
+          UPDATE SET VotePoints = VotePoints + @reward, TotalEarned = TotalEarned + @reward, UpdatedAt = GETDATE()
+        WHEN NOT MATCHED THEN
+          INSERT (AccountName, VotePoints, TotalEarned) VALUES (@username, @reward, @reward);
+      `, { reward: totalReward, username });
+
+      return { claimedCount, totalReward };
+    });
+
+    if (result.claimedCount === 0) {
       return NextResponse.json(
         { error: 'No pending vote found. Please vote first.' },
         { status: 400 }
       );
     }
 
-    const totalReward = rewardPerVote * claimedCount;
-
-    // STEP 2: Award Vote Points (upsert). Votes are already marked, so if this
-    // fails VP is lost but votes won't re-award — admin can manually correct.
-    await webDB.query(`
-      MERGE WebVotePoints AS t
-      USING (SELECT @username AS AccountName) AS s
-      ON t.AccountName = s.AccountName
-      WHEN MATCHED THEN
-        UPDATE SET VotePoints = VotePoints + @reward, TotalEarned = TotalEarned + @reward, UpdatedAt = GETDATE()
-      WHEN NOT MATCHED THEN
-        INSERT (AccountName, VotePoints, TotalEarned) VALUES (@username, @reward, @reward);
-    `, { reward: totalReward, username });
+    const { claimedCount, totalReward } = result;
 
     // Log the reward
     await logApi({

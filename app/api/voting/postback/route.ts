@@ -16,6 +16,12 @@ function getClientIPFromRequest(request: NextRequest): string | null {
   return null;
 }
 
+// XtremeTop100 postback server IPs — configurable via WebsiteConfigs 'vote_allowed_postback_ips'
+// XtremeTop100 is now behind Cloudflare, so their postback IPs may change.
+// Admin can set a comma-separated IP list in the config. If empty, all IPs are allowed
+// (relying on atomic dedup + cooldown as primary protection).
+const DEFAULT_ALLOWED_IPS: string[] = [];
+
 export async function GET(request: NextRequest) {
   const rateLimitIp = getClientIP(request);
   const limit = rateLimiter.check(rateLimitIp, 'voting-postback', 20, 60 * 1000);
@@ -50,25 +56,35 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Verify the request is from an allowed source (skip for testing mode with TEST_SIMULATED)
+    const isSimulated = testingMode && votingIp === 'TEST_SIMULATED';
+    if (!isSimulated) {
+      // Check if admin has configured allowed postback IPs
+      const allowedIpsResult = await webDB.query(`
+        SELECT ConfigValue FROM WebsiteConfigs WHERE ConfigKey = 'vote_allowed_postback_ips'
+      `);
+      const allowedIpsRaw = allowedIpsResult.recordset[0]?.ConfigValue || '';
+      const allowedIps = allowedIpsRaw
+        ? allowedIpsRaw.split(',').map((ip: string) => ip.trim()).filter(Boolean)
+        : DEFAULT_ALLOWED_IPS;
+
+      if (allowedIps.length > 0) {
+        if (!clientIP || !allowedIps.includes(clientIP)) {
+          console.warn(`[postback] Rejected postback from unauthorized IP: ${clientIP || 'unknown'}`);
+          return NextResponse.json(
+            { error: 'Unauthorized postback source' },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     if (!testingMode) {
-      // Check for duplicate postback — reject if a vote from this IP already exists within cooldown
+      // Get cooldown hours
       const cooldownResult = await webDB.query(`
         SELECT ConfigValue FROM WebsiteConfigs WHERE ConfigKey = 'vote_reward_cooldown_hours'
       `);
       const cooldownHours = parseInt(cooldownResult.recordset[0]?.ConfigValue || '12');
-
-      const duplicateCheck = await webDB.query(`
-        SELECT TOP 1 LogID FROM VoteLogs
-        WHERE IPAddress = @ip AND VoteTime > DATEADD(HOUR, -@cooldown, GETDATE())
-      `, { ip: votingIp, cooldown: cooldownHours });
-
-      if (duplicateCheck.recordset.length > 0) {
-        console.warn(`[postback] Duplicate vote from IP: ${votingIp} for user: ${username}`);
-        return NextResponse.json(
-          { error: 'Duplicate vote' },
-          { status: 409 }
-        );
-      }
 
       // Verify the account exists before logging the vote
       const userCheck = await userDB.query(`
@@ -82,16 +98,34 @@ export async function GET(request: NextRequest) {
           { status: 404 }
         );
       }
-    }
 
-    // Log the vote
-    await webDB.query(`
-      INSERT INTO VoteLogs (AccountName, VoteTime, IPAddress, RewardClaimed)
-      VALUES (@username, GETDATE(), @ip, 0)
-    `, {
-      username,
-      ip: votingIp,
-    });
+      // Atomic insert with built-in duplicate check — prevents TOCTOU race condition
+      // Checks both IP AND accountName within cooldown in a single INSERT
+      const insertResult = await webDB.query(`
+        INSERT INTO VoteLogs (AccountName, VoteTime, IPAddress, RewardClaimed)
+        SELECT @username, GETDATE(), @ip, 0
+        WHERE NOT EXISTS (
+          SELECT 1 FROM VoteLogs
+          WHERE (IPAddress = @ip OR AccountName = @username)
+            AND VoteTime > DATEADD(HOUR, -@cooldown, GETDATE())
+        )
+      `, { username, ip: votingIp, cooldown: cooldownHours });
+
+      const rowsInserted = insertResult.rowsAffected[0] ?? 0;
+      if (rowsInserted === 0) {
+        console.warn(`[postback] Duplicate vote rejected for user: ${username} IP: ${votingIp}`);
+        return NextResponse.json(
+          { error: 'Duplicate vote within cooldown' },
+          { status: 409 }
+        );
+      }
+    } else {
+      // Testing mode: still log but skip duplicate check for simulated votes
+      await webDB.query(`
+        INSERT INTO VoteLogs (AccountName, VoteTime, IPAddress, RewardClaimed)
+        VALUES (@username, GETDATE(), @ip, 0)
+      `, { username, ip: votingIp });
+    }
 
     // Update LastVoteTime in WebVotePoints so cooldown survives log purges
     await webDB.query(`
@@ -108,10 +142,7 @@ export async function GET(request: NextRequest) {
     await webDB.query(`
       INSERT INTO WebAuditLogs (AccountName, Action, Details, IPAddress)
       VALUES (@username, 'VOTE_POSTBACK', 'Vote postback received from xtremetop100', @ip)
-    `, {
-      username,
-      ip: votingIp,
-    });
+    `, { username, ip: votingIp });
 
     return NextResponse.json({ message: 'Vote recorded successfully' });
   } catch (error) {

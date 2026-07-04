@@ -153,6 +153,38 @@ export async function query<T = any>(
   return _queryWithRetry<T>(dbName, queryString, params);
 }
 
+// Run multiple queries in a single transaction
+export async function transaction<T>(
+  dbName: keyof typeof databases,
+  fn: (request: sql.Request) => Promise<T>
+): Promise<T> {
+  const pool = await getPool(dbName);
+  const tx = pool.transaction();
+  await tx.begin();
+  try {
+    const result = await fn(tx.request());
+    await tx.commit();
+    return result;
+  } catch (err) {
+    try { await tx.rollback(); } catch {}
+    throw err;
+  }
+}
+
+// Helper to run a parameterized query within a transaction
+export async function txQuery<T = any>(
+  request: sql.Request,
+  queryString: string,
+  params?: Record<string, any>
+): Promise<sql.IResult<T>> {
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      request.input(key, value);
+    });
+  }
+  return request.query<T>(queryString);
+}
+
 // Close all connection pools
 export async function closeAllPools(): Promise<void> {
   const entries = Object.entries(pools);
