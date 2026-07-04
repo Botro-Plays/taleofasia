@@ -14,20 +14,13 @@ const dbConfig = {
     useUTC: false,
   },
   pool: {
-    max: 10,
+    max: 5,
     min: 0,
-    // Close idle pool connections BEFORE SQL Server's ~30s timeout
-    // to avoid race where SQL Server closes it first, pool thinks it's valid
     idleTimeoutMillis: 15000,
-    // Fail fast if pool is exhausted (prevents hung requests)
-    acquireTimeoutMillis: 5000,
+    acquireTimeoutMillis: 10000,
   },
-  // Socket-level validation is cheaper than SELECT 1; mssql still
-  // falls back to SQL validation if socket check passes but connection
-  // turns out dead. Explicit true is default; 'socket' is faster at scale.
   validateConnection: true,
-  // Fail fast on slow connection establishment
-  connectionTimeout: 5000,
+  connectionTimeout: 15000,
   // Per-query timeout; logDB overrides to 60s for large reports
   requestTimeout: 5000,
 };
@@ -83,7 +76,8 @@ export async function getPool(dbName: keyof typeof databases): Promise<sql.Conne
       delete pools[dbName];
     }
 
-    const pool = new sql.ConnectionPool(databases[dbName]);
+    const cfg = databases[dbName];
+    const pool = new sql.ConnectionPool(cfg);
 
     // Recreate pool on fatal errors instead of leaving dead pools in memory
     pool.on('error', (err) => {
@@ -94,7 +88,14 @@ export async function getPool(dbName: keyof typeof databases): Promise<sql.Conne
     });
 
     pools[dbName] = pool;
-    await pool.connect();
+    try {
+      await pool.connect();
+    } catch (e: any) {
+      // CRITICAL: clear connecting state so future calls can retry
+      delete pools[dbName];
+      connecting[dbName] = null;
+      throw e;
+    }
     connecting[dbName] = null;
     return pool;
   })();
@@ -126,8 +127,8 @@ async function _queryWithRetry<T = any>(
     return await request.query<T>(queryString);
   } catch (err: any) {
     const msg = err?.message || String(err);
-    // Retry on stale connection: SQL Server closed it between validation and use
-    const isStaleConnection = /Connection is closed/i.test(msg);
+    // Retry on stale connection or connection reset: SQL Server closed/reset it
+    const isStaleConnection = /Connection is closed|ECONNRESET|Connection lost/i.test(msg);
     if (isStaleConnection && attempt <= MAX_RETRIES) {
       console.warn(`[DB] Stale connection on ${dbName}, retry ${attempt}/${MAX_RETRIES}...`);
       // Force pool recreation on next call by clearing the cached pool
