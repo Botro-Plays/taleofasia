@@ -3,8 +3,13 @@ import { auth } from '@/lib/auth/config';
 import { webDB } from '@/lib/db';
 import { invalidate } from '@/lib/cache';
 import { logApi, logError } from '@/lib/logging';
+import { rateLimiter, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIP(request);
+  const limit = rateLimiter.check(ip, 'voting-reward', 10, 60 * 1000);
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter);
+
   try {
     const session = await auth();
 

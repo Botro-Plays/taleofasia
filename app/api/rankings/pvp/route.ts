@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverDB, clanDB } from '@/lib/db';
 import { cached } from '@/lib/cache';
+import { rateLimiter, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function GET(request: NextRequest) {
+  const ip = getClientIP(request);
+  const limit = rateLimiter.check(ip, 'rankings-pvp', 60, 60 * 1000);
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter);
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const type = searchParams.get('type') || 'personal'; // personal or clan

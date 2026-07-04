@@ -1,7 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { userDB, clanDB, serverDB, webDB } from '@/lib/db';
-export async function GET() {
+import { rateLimiter, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+
+export async function GET(request: NextRequest) {
+  const ip = getClientIP(request);
+  const limit = rateLimiter.check(ip, 'user-characters', 30, 60 * 1000);
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter);
+
   try {
     const session = await auth();
 

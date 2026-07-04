@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { webDB, logDB } from '@/lib/db';
+import { rateLimiter, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIP(request);
+  const limit = rateLimiter.check(ip, 'shop-purchase', 10, 60 * 1000);
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter);
+
   try {
     const session = await auth();
     const username = session?.user?.name || session?.user?.id || '';

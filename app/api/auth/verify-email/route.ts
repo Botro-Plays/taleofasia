@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { userDB, webDB } from '@/lib/db';
+import { rateLimiter, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 const VERIFY_TABLE = 'WebVerificationTokens';
 
 export async function GET(request: NextRequest) {
+  const ip = getClientIP(request);
+  const limit = rateLimiter.check(ip, 'verify-email', 10, 60 * 1000);
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter);
+
   try {
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
@@ -47,12 +52,34 @@ export async function GET(request: NextRequest) {
 
     const username = row.AccountName;
 
-    // Activate the account (Flag = 98 means activated, ActiveCode = 0 clears verification hash)
-    await userDB.query(`
+    // Activate the account (Flag = 98 means verified, Active = 1 means active)
+    const updateResult = await userDB.query(`
       UPDATE UserInfo
       SET Active = '1', Flag = '98', ActiveCode = '0'
       WHERE AccountName = @username
     `, { username });
+
+    const rowsAffected = updateResult.rowsAffected?.[0] ?? 0;
+    if (rowsAffected === 0) {
+      console.error(`[verify-email] UPDATE affected 0 rows for account: ${username}`);
+      return NextResponse.json(
+        { error: 'Failed to activate account. Please contact support.' },
+        { status: 500 }
+      );
+    }
+
+    // Verify the update was applied
+    const verifyCheck = await userDB.query(`
+      SELECT Active, Flag FROM UserInfo WHERE AccountName = @username
+    `, { username });
+    const verifyRow = verifyCheck.recordset[0];
+    if (!verifyRow || String(verifyRow.Active) !== '1' || String(verifyRow.Flag) !== '98') {
+      console.error(`[verify-email] Post-UPDATE verification failed for ${username}:`, verifyRow);
+      return NextResponse.json(
+        { error: 'Account activation could not be confirmed. Please contact support.' },
+        { status: 500 }
+      );
+    }
 
     // Mark token as used (non-critical — account is already activated)
     try {
@@ -72,7 +99,7 @@ export async function GET(request: NextRequest) {
         VALUES (@username, 'EMAIL_VERIFIED', 'Email verified successfully', @ip)
       `, {
         username,
-        ip: request.headers.get('x-forwarded-for') || '127.0.0.1'
+        ip: ip.substring(0, 50),
       });
     } catch (e) {
       console.error('Failed to log verification audit:', e);

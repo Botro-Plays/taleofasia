@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { gameDB, webDB } from '@/lib/db';
 import { cached } from '@/lib/cache';
 import { buildCategorySQL, MAIN_CATEGORIES, getItemType } from '@/lib/item-types';
+import { rateLimiter, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 const ITEM_QUERY = `
   SELECT
@@ -54,6 +55,10 @@ const ITEM_QUERY = `
 `;
 
 export async function GET(req: Request) {
+  const ip = getClientIP(req as NextRequest);
+  const limit = rateLimiter.check(ip, 'items', 60, 60 * 1000);
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter);
+
   try {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get('category') || '';

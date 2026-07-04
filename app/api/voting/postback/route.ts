@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { webDB, userDB } from '@/lib/db';
 import { invalidate } from '@/lib/cache';
+import { rateLimiter, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
-function getClientIP(request: NextRequest): string | null {
+function getClientIPFromRequest(request: NextRequest): string | null {
   const cfConnecting = request.headers.get('cf-connecting-ip');
   if (cfConnecting) return cfConnecting.trim();
 
@@ -16,7 +17,11 @@ function getClientIP(request: NextRequest): string | null {
 }
 
 export async function GET(request: NextRequest) {
-  const clientIP = getClientIP(request);
+  const rateLimitIp = getClientIP(request);
+  const limit = rateLimiter.check(rateLimitIp, 'voting-postback', 20, 60 * 1000);
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter);
+
+  const clientIP = getClientIPFromRequest(request);
   console.log(`[postback] Incoming request from server IP: ${clientIP || 'unknown'} params: ${request.nextUrl.search}`);
 
   try {

@@ -1,8 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { webDB, gameDB } from '@/lib/db';
 import { cached } from '@/lib/cache';
+import { rateLimiter, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const ip = getClientIP(request);
+  const limit = rateLimiter.check(ip, 'shop-items', 60, 60 * 1000);
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter);
+
   try {
     const items = await cached('shop_items_public', 30_000, async () => {
       const shopResult = await webDB.query(`

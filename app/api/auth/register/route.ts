@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
         @password, 
         @regisDay, 
         '64', 
-        '0', 
+        '1', 
         @token, 
         '0', 
         @email, 

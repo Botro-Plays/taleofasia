@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { serverDB } from '@/lib/db';
 import { createSocket } from 'dgram';
 import { readFileSync, existsSync } from 'fs';
 import path from 'path';
+import { rateLimiter, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 // In-memory cache to avoid hammering the DB/UDP on every page load
 type StatusData = { status: 'online' | 'offline' | 'maintenance'; onlineUsers: number };
@@ -81,7 +82,11 @@ async function getOnlineUsers(): Promise<number> {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const ip = getClientIP(request);
+  const limit = rateLimiter.check(ip, 'server-status', 30, 60 * 1000);
+  if (!limit.allowed) return rateLimitResponse(limit.retryAfter);
+
   try {
     // Serve cached value if still fresh
     if (lastStatus && Date.now() - lastStatus.ts < TTL_MS) {
