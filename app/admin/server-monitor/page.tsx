@@ -50,6 +50,7 @@ export default function ServerMonitorPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const rapidRefreshRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isVisibleRef = useRef(true);
 
   const fetchData = useCallback(async () => {
     try {
@@ -89,9 +90,24 @@ export default function ServerMonitorPage() {
     }
   }, [status, router, checkAdminAndFetch]);
 
+  // Pause polling when tab is hidden, resume when visible
   useEffect(() => {
-    if (autoRefresh && isAdmin) {
-      intervalRef.current = setInterval(() => { void fetchData(); }, 5000);
+    const handleVisibility = () => {
+      isVisibleRef.current = !document.hidden;
+      if (document.hidden) {
+        if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+      } else if (autoRefresh && isAdmin && !intervalRef.current) {
+        void fetchData();
+        intervalRef.current = setInterval(() => { void fetchData(); }, 10000);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [autoRefresh, isAdmin, fetchData]);
+
+  useEffect(() => {
+    if (autoRefresh && isAdmin && !document.hidden) {
+      intervalRef.current = setInterval(() => { void fetchData(); }, 10000);
       return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
     }
   }, [autoRefresh, isAdmin, fetchData]);
