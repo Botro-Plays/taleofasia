@@ -48,6 +48,7 @@ export default function ServerMonitorPage() {
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rapidRefreshRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -89,7 +90,7 @@ export default function ServerMonitorPage() {
 
   useEffect(() => {
     if (autoRefresh && isAdmin) {
-      intervalRef.current = setInterval(() => { void fetchData(); }, 10000);
+      intervalRef.current = setInterval(() => { void fetchData(); }, 5000);
       return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
     }
   }, [autoRefresh, isAdmin, fetchData]);
@@ -111,6 +112,18 @@ export default function ServerMonitorPage() {
       if (res.ok) {
         showToast(d.message || 'Action completed', 'success');
         await fetchData();
+
+        // After restart actions, poll aggressively for 2 minutes
+        if (action === 'restart-all' || action === 'restart-games') {
+          // Clear any existing rapid refresh
+          if (rapidRefreshRef.current) clearTimeout(rapidRefreshRef.current);
+          // Poll every 3s for 2 minutes
+          const rapidInterval = setInterval(() => { void fetchData(); }, 3000);
+          rapidRefreshRef.current = setTimeout(() => {
+            clearInterval(rapidInterval);
+            rapidRefreshRef.current = null;
+          }, 120000);
+        }
       } else {
         showToast(d.error || 'Action failed', 'error');
       }

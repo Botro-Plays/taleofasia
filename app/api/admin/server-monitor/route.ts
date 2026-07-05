@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { userDB } from '@/lib/db';
-import { execFileSync, spawn } from 'child_process';
+import { execFile, spawn } from 'child_process';
 import { readFileSync, existsSync, writeFileSync, unlinkSync, statSync } from 'fs';
 import { join } from 'path';
+import { promisify } from 'util';
+
+const execFileAsync = promisify(execFile);
 
 const SERVERS_BASE = 'C:\\taleofasia-server-project\\servers';
 const PAUSE_FILE = join(SERVERS_BASE, 'monitor.pause');
@@ -36,7 +39,7 @@ async function checkAdmin(username: string) {
   return user.GameMasterType === 1 && user.GameMasterLevel >= 3;
 }
 
-function getServerStatus() {
+async function getServerStatus() {
   const servers: Array<{
     key: string;
     label: string;
@@ -47,15 +50,16 @@ function getServerStatus() {
     uptimeSeconds: number | null;
   }> = [];
 
-  // Get all Server.exe processes with their paths
+  // Get all Server.exe processes with their paths (async, non-blocking)
   const processMap: Map<string, { pid: number; startTime: Date }> = new Map();
   try {
     const psScript = "Get-Process -Name Server -ErrorAction SilentlyContinue | ForEach-Object { Write-Output ($_.Id.ToString() + '|' + $_.Path + '|' + $_.StartTime.ToString('o')) }";
-    const output = execFileSync(
+    const { stdout } = await execFileAsync(
       'powershell',
       ['-NoProfile', '-Command', psScript],
       { timeout: 5000, encoding: 'utf-8' }
-    ).trim();
+    );
+    const output = stdout.trim();
 
     if (output) {
       for (const line of output.split('\n')) {
@@ -112,7 +116,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const servers = getServerStatus();
+    const servers = await getServerStatus();
     const monitoringPaused = existsSync(PAUSE_FILE);
     const recentLogs = getMonitorLog(50);
     const allRunning = servers.every(s => s.running);
