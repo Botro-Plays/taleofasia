@@ -26,6 +26,7 @@ type MonitorData = {
   monitoringPaused: boolean;
   pausedAt: string | null;
   recentLogs: string[];
+  debugLogs: Record<string, string[]>;
 };
 
 function formatUptime(seconds: number): string {
@@ -114,7 +115,7 @@ export default function ServerMonitorPage() {
         await fetchData();
 
         // After restart actions, poll aggressively for 2 minutes
-        if (action === 'restart-all' || action === 'restart-games') {
+        if (action === 'restart-all' || action === 'restart-games' || action === 'restart-game1' || action === 'restart-game2') {
           // Clear any existing rapid refresh
           if (rapidRefreshRef.current) clearTimeout(rapidRefreshRef.current);
           // Poll every 3s for 2 minutes
@@ -146,7 +147,7 @@ export default function ServerMonitorPage() {
 
   if (!isAdmin || !data) return null;
 
-  const { servers, allRunning, monitoringPaused, recentLogs } = data;
+  const { servers, allRunning, monitoringPaused, recentLogs, debugLogs } = data;
 
   return (
     <GlobalTheme>
@@ -279,6 +280,19 @@ export default function ServerMonitorPage() {
                   </span>
                 </div>
               </div>
+
+              {/* Per-server restart button */}
+              {srv.key !== 'login-server' && (
+                <button
+                  onClick={() => handleAction(srv.key === 'game-server1' ? 'restart-game1' : 'restart-game2')}
+                  disabled={actionLoading !== null}
+                  className="toa-btn toa-btn-ghost"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.75rem', fontSize: '0.75rem', padding: '0.4rem 0.8rem', width: 'fit-content' }}
+                >
+                  <RefreshCw size={12} />
+                  {actionLoading === (srv.key === 'game-server1' ? 'restart-game1' : 'restart-game2') ? 'Restarting…' : 'Restart This Server'}
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -362,6 +376,47 @@ export default function ServerMonitorPage() {
           )}
         </div>
 
+        {/* DEBUG LOGS */}
+        <div className="toa-label" style={{ marginBottom: '1rem' }}>
+          <Monitor size={14} style={{ display: 'inline', marginRight: '0.4rem', verticalAlign: 'middle' }} />
+          Debug Logs (real-time, last 30 lines per server)
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
+          {servers.map((srv) => {
+            const logs = debugLogs?.[srv.key] ?? [];
+            return (
+              <div key={srv.key} className="toa-seal-card" style={{ padding: '1.25rem', position: 'relative' }}>
+                <div className="toa-seal-corner toa-seal-corner-tl" />
+                <div className="toa-seal-corner toa-seal-corner-br" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: srv.running ? 'var(--toa-success)' : 'var(--toa-danger)', flexShrink: 0 }} />
+                  <span style={{ fontFamily: 'var(--toa-font-display)', fontWeight: 700, fontSize: '0.85rem', color: 'var(--toa-gold-bright)' }}>
+                    {srv.label}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--toa-muted)', marginLeft: 'auto' }}>DEBUG.log</span>
+                </div>
+                <div style={{ maxHeight: '250px', overflowY: 'auto', fontFamily: 'monospace', fontSize: '0.72rem', lineHeight: 1.7, color: 'var(--toa-bone)' }}>
+                  {logs.length === 0 ? (
+                    <div style={{ color: 'var(--toa-muted)', textAlign: 'center', padding: '1.5rem' }}>No debug log available</div>
+                  ) : (
+                    logs.map((line, i) => {
+                      const isError = /error|fail|crash|exception/i.test(line);
+                      const isWarning = /warn|duplicate|timeout/i.test(line);
+                      const isStart = /STARTED|Init\(\) completed|Ready to accept/i.test(line);
+                      const color = isError ? 'var(--toa-danger)' : isWarning ? '#E5A12A' : isStart ? 'var(--toa-success)' : 'var(--toa-bone)';
+                      return (
+                        <div key={i} style={{ color, borderBottom: i < logs.length - 1 ? '1px solid rgba(184,155,94,0.05)' : 'none', padding: '0.1rem 0', wordBreak: 'break-all' }}>
+                          {line}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
         {/* INFO NOTE */}
         <div style={{ marginTop: '2rem', padding: '1.25rem 1.5rem', background: 'rgba(184,155,94,0.05)', border: '1px solid rgba(184,155,94,0.1)', borderRadius: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
@@ -369,7 +424,11 @@ export default function ServerMonitorPage() {
             <div style={{ fontSize: '0.8rem', color: 'var(--toa-muted)', lineHeight: 1.6 }}>
               <strong style={{ color: 'var(--toa-bone)' }}>Full Restart</strong> stops all servers, starts login server, waits 30-60s, then starts game servers in sequence.
               <br />
-              <strong style={{ color: 'var(--toa-bone)' }}>Restart Game Servers</strong> only restarts game-server1 and game-server2 without touching the login server.
+              <strong style={{ color: 'var(--toa-bone)' }}>Restart Game Servers</strong> restarts both game servers without touching the login server.
+              <br />
+              <strong style={{ color: 'var(--toa-bone)' }}>Restart This Server</strong> (per-card button) restarts only that individual game server. Others are left untouched.
+              <br />
+              <strong style={{ color: 'var(--toa-bone)' }}>Auto-Monitor</strong> now restarts only the crashed game server independently. Login server crash still triggers a full restart.
               <br />
               <strong style={{ color: 'var(--toa-bone)' }}>Pause Monitor</strong> creates a pause file so the scheduled task skips checking. Remember to resume after maintenance.
             </div>

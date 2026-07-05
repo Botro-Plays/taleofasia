@@ -18,6 +18,12 @@ const SERVER_PATHS: Record<string, string> = {
   'game-server2': join(SERVERS_BASE, 'game-server2', 'Server.exe'),
 };
 
+const DEBUG_LOGS: Record<string, string> = {
+  'login-server': join(SERVERS_BASE, 'login-server', 'DEBUG.log'),
+  'game-server1': join(SERVERS_BASE, 'game-server1', 'DEBUG.log'),
+  'game-server2': join(SERVERS_BASE, 'game-server2', 'DEBUG.log'),
+};
+
 const SERVER_LABELS: Record<string, string> = {
   'login-server': 'Login Server',
   'game-server1': 'Game Server 1 (PH)',
@@ -104,6 +110,17 @@ function getMonitorLog(lines: number = 50): string[] {
   }
 }
 
+function getDebugLog(serverKey: string, lines: number = 30): string[] {
+  const logPath = DEBUG_LOGS[serverKey];
+  if (!logPath || !existsSync(logPath)) return [];
+  try {
+    const content = readFileSync(logPath, 'utf-8');
+    return content.split('\n').filter(Boolean).slice(-lines);
+  } catch {
+    return [];
+  }
+}
+
 export async function GET() {
   try {
     const session = await auth();
@@ -121,6 +138,12 @@ export async function GET() {
     const recentLogs = getMonitorLog(50);
     const allRunning = servers.every(s => s.running);
 
+    // Fetch debug.log tails for each server
+    const debugLogs: Record<string, string[]> = {};
+    for (const key of Object.keys(DEBUG_LOGS)) {
+      debugLogs[key] = getDebugLog(key, 30);
+    }
+
     // Get pause file creation time if it exists
     let pausedAt: string | null = null;
     if (monitoringPaused) {
@@ -136,6 +159,7 @@ export async function GET() {
       monitoringPaused,
       pausedAt,
       recentLogs,
+      debugLogs,
     });
   } catch (error) {
     console.error('Error fetching server monitor status:', error);
@@ -199,6 +223,34 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         message: 'Game server restart initiated. Servers will come back online in 20-40 seconds. Monitor the log for progress.',
+        restartInitiated: true,
+      });
+    }
+
+    if (action === 'restart-game1') {
+      const child = spawn(
+        'powershell',
+        ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1', '-ForceRestartGame1'],
+        { detached: true, stdio: 'ignore' }
+      );
+      child.unref();
+
+      return NextResponse.json({
+        message: 'Game Server 1 restart initiated. It will be back online in ~10 seconds.',
+        restartInitiated: true,
+      });
+    }
+
+    if (action === 'restart-game2') {
+      const child = spawn(
+        'powershell',
+        ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1', '-ForceRestartGame2'],
+        { detached: true, stdio: 'ignore' }
+      );
+      child.unref();
+
+      return NextResponse.json({
+        message: 'Game Server 2 restart initiated. It will be back online in ~10 seconds.',
         restartInitiated: true,
       });
     }
