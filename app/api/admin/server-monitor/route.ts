@@ -169,11 +169,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'restart-all') {
-      // Trigger the monitor script directly (forces full restart)
+      // Trigger the monitor script with -ForceRestart flag (stops all, restarts in order)
       try {
         execFileSync(
           'powershell',
-          ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1'],
+          ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1', '-ForceRestart'],
           { timeout: 180000, encoding: 'utf-8' }
         );
       } catch {
