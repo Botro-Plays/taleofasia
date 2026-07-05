@@ -5,6 +5,7 @@ import { execFile, spawn } from 'child_process';
 import { readFileSync, existsSync, writeFileSync, unlinkSync, statSync } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
+import { createConnection } from 'net';
 
 const execFileAsync = promisify(execFile);
 
@@ -45,6 +46,18 @@ async function checkAdmin(username: string) {
   return user.GameMasterType === 1 && user.GameMasterLevel >= 3;
 }
 
+function checkPort(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = createConnection({ host: '127.0.0.1', port }, () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.setTimeout(2000);
+    socket.on('error', () => resolve(false));
+    socket.on('timeout', () => { socket.destroy(); resolve(false); });
+  });
+}
+
 async function getServerStatus() {
   const servers: Array<{
     key: string;
@@ -56,44 +69,18 @@ async function getServerStatus() {
     uptimeSeconds: number | null;
   }> = [];
 
-  // Get all Server.exe processes with their paths (async, non-blocking)
-  const processMap: Map<string, { pid: number; startTime: Date }> = new Map();
-  try {
-    const psScript = "Get-Process -Name Server -ErrorAction SilentlyContinue | ForEach-Object { Write-Output ($_.Id.ToString() + '|' + $_.Path + '|' + $_.StartTime.ToString('o')) }";
-    const { stdout } = await execFileAsync(
-      'powershell',
-      ['-NoProfile', '-Command', psScript],
-      { timeout: 5000, encoding: 'utf-8' }
-    );
-    const output = stdout.trim();
-
-    if (output) {
-      for (const line of output.split('\n')) {
-        const parts = line.trim().split('|');
-        if (parts.length >= 3) {
-          const pid = parseInt(parts[0]);
-          const path = parts[1];
-          const startTime = new Date(parts[2]);
-          processMap.set(path, { pid, startTime });
-        }
-      }
-    }
-  } catch {
-    // Process check failed
-  }
-
+  // Use non-invasive TCP port checks instead of Get-Process (which opens handles to Server.exe)
   for (const [key, exePath] of Object.entries(SERVER_PATHS)) {
-    const proc = processMap.get(exePath);
-    const now = new Date();
-    const uptimeSeconds = proc ? Math.floor((now.getTime() - proc.startTime.getTime()) / 1000) : null;
+    const port = SERVER_PORTS[key];
+    const running = await checkPort(port);
     servers.push({
       key,
       label: SERVER_LABELS[key],
-      port: SERVER_PORTS[key],
-      running: !!proc,
-      pid: proc?.pid ?? null,
-      startTime: proc?.startTime ?? null,
-      uptimeSeconds,
+      port,
+      running,
+      pid: null,
+      startTime: null,
+      uptimeSeconds: null,
     });
   }
 

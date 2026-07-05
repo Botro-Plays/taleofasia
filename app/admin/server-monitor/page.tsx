@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { GlobalTheme } from '@/app/components/GlobalTheme';
 import {
   ChevronLeft, Server, Activity, Pause, Play, RefreshCw,
-  CheckCircle, XCircle, Clock, AlertTriangle, Monitor, Power,
+  CheckCircle, XCircle, AlertTriangle, Monitor, Power,
 } from 'lucide-react';
 
 type ServerInfo = {
@@ -281,18 +281,12 @@ export default function ServerMonitorPage() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                   <span style={{ color: 'var(--toa-muted)' }}>Port</span>
-                  <span style={{ color: 'var(--toa-bone)' }}>UDP {srv.port}</span>
+                  <span style={{ color: 'var(--toa-bone)' }}>TCP {srv.port}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                  <span style={{ color: 'var(--toa-muted)' }}>PID</span>
-                  <span style={{ color: 'var(--toa-bone)' }}>{srv.pid ?? '—'}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                  <span style={{ color: 'var(--toa-muted)' }}>Uptime</span>
-                  <span style={{ color: 'var(--toa-bone)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    {srv.running && srv.uptimeSeconds !== null ? (
-                      <><Clock size={11} /> {formatUptime(srv.uptimeSeconds)}</>
-                    ) : '—'}
+                  <span style={{ color: 'var(--toa-muted)' }}>Connection</span>
+                  <span style={{ color: srv.running ? 'var(--toa-success)' : 'var(--toa-danger)' }}>
+                    {srv.running ? 'Listening' : 'No response'}
                   </span>
                 </div>
               </div>
