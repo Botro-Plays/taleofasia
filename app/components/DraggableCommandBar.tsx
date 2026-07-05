@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 import { useDraggable } from '@/app/components/useDraggable';
 
 interface ServerStatus {
@@ -106,13 +105,13 @@ export function DraggableCommandBar() {
         <div className="toa-command-label">Bless Castle</div>
         <div className={`toa-command-value ${!crownHolders.blessCastle?.clanName ? 'vacant' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           {crownHolders.blessCastle?.iconID && crownHolders.blessCastle.iconID > 0 && (
-            <Image
+            <img
               src={`https://taleofasia.com/ClanImage/${crownHolders.blessCastle.iconID}.bmp`}
               alt="Clan"
               width={24}
               height={24}
               style={{ borderRadius: '3px', flexShrink: 0, border: '1px solid rgba(184,155,94,0.3)' }}
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
           )}
           {crownHolders.blessCastle?.clanName || 'Vacant'}
@@ -123,13 +122,13 @@ export function DraggableCommandBar() {
         <div className="toa-command-label">Bellatra</div>
         <div className={`toa-command-value ${!crownHolders.surviveOrDie?.clanName ? 'vacant' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           {crownHolders.surviveOrDie?.iconID && crownHolders.surviveOrDie.iconID > 0 && (
-            <Image
+            <img
               src={`https://taleofasia.com/ClanImage/${crownHolders.surviveOrDie.iconID}.bmp`}
               alt="Clan"
               width={24}
               height={24}
               style={{ borderRadius: '3px', flexShrink: 0, border: '1px solid rgba(184,155,94,0.3)' }}
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
             />
           )}
           {crownHolders.surviveOrDie?.clanName || 'Vacant'}

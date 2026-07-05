@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { GlobalTheme } from '@/app/components/GlobalTheme';
 import { Volume2, VolumeX } from 'lucide-react';
@@ -268,7 +267,7 @@ export default function Home() {
                   onClick={() => setSelectedClass(idx)}
                   style={{ pointerEvents: 'auto', position: 'relative', zIndex: 10 }}
                 >
-                  <Image
+                  <img
                     src={`/images/CharClass/${idx + 1}.png`}
                     alt={cls.name}
                     width={32}
@@ -280,7 +279,7 @@ export default function Home() {
                 {/* Inline detail for mobile — shown right below tapped class */}
                 {selectedClass === idx && (
                   <div className="toa-class-detail toa-class-detail-inline">
-                    <Image
+                    <img
                       src={`/images/CharClass/${selectedClass + 1}.png`}
                       alt={CLASS_DATA[selectedClass].name}
                       width={96}
@@ -296,7 +295,7 @@ export default function Home() {
           </div>
           {/* Detail — desktop side panel only */}
           <div className="toa-class-detail toa-class-detail-panel">
-            <Image
+            <img
               src={`/images/CharClass/${selectedClass + 1}.png`}
               alt={CLASS_DATA[selectedClass].name}
               width={96}

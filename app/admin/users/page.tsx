@@ -3,7 +3,6 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
 import { PageShell } from '@/app/components/PageShell';
 import { Search, X } from 'lucide-react';
 
@@ -635,13 +634,13 @@ export default function AdminUsersPage() {
                               <div className="text-slate-400 text-sm">CharacterID: <span className="text-slate-200 font-semibold">{expandedChars[c.Name]?.data?.CharacterID}</span></div>
                               <div className="grid md:grid-cols-2 gap-3">
                                 <div className="toa-panel">
-                                  <Image
+                                  <img
                                     src={getClanIconUrl(Number(expandedChars[c.Name]?.data?.ClanID || 0))}
                                     alt="Clan"
                                     width={32}
                                     height={32}
                                     className="w-8 h-8 rounded border border-slate-600"
-                                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://taleofasia.com/ClanImage/999999.bmp'; }}
+                                    onError={(e) => { e.currentTarget.src = 'https://taleofasia.com/ClanImage/999999.bmp'; }}
                                   />
                                   <div>
                                     <div className="text-slate-400 text-xs">Clan</div>
@@ -649,7 +648,7 @@ export default function AdminUsersPage() {
                                   </div>
                                 </div>
                                 <div className="toa-panel">
-                                  <Image
+                                  <img
                                     src={classDetails[Number(expandedChars[c.Name]?.data?.Class)]?.image || 'https://taleofasia.com/images/CharClass/unknown.png'}
                                     alt="Class"
                                     width={32}

@@ -3,7 +3,6 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
 import { PageShell } from '@/app/components/PageShell';
 import { Castle, Sword, Settings, RefreshCw } from 'lucide-react';
 
@@ -130,7 +129,7 @@ export default function GameConfigPage() {
               <div style={{ fontFamily: 'var(--toa-font-display)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--toa-muted)', marginBottom: '0.35rem' }}>Bless Castle</div>
               {crownHolders.blessCastle ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                  <Image src={getClanIconUrl(crownHolders.blessCastle.IconID)} alt={crownHolders.blessCastle.ClanName} width={36} height={36} style={{ border: '1px solid rgba(184,155,94,0.3)' }} />
+                  <img src={getClanIconUrl(crownHolders.blessCastle.IconID)} alt={crownHolders.blessCastle.ClanName} width={36} height={36} style={{ border: '1px solid rgba(184,155,94,0.3)' }} />
                   <span style={{ fontWeight: 700, color: 'var(--toa-bone)', fontSize: '0.875rem' }}>{crownHolders.blessCastle.ClanName}</span>
                 </div>
               ) : <span style={{ fontSize: '0.8rem', color: 'var(--toa-muted)' }}>No current holder</span>}
@@ -143,7 +142,7 @@ export default function GameConfigPage() {
               <div style={{ fontFamily: 'var(--toa-font-display)', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--toa-muted)', marginBottom: '0.35rem' }}>Bellatra Champion</div>
               {crownHolders.bellatra ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                  <Image src={getClanIconUrl(crownHolders.bellatra.IconID)} alt={crownHolders.bellatra.ClanName} width={36} height={36} style={{ border: '1px solid rgba(184,155,94,0.3)' }} />
+                  <img src={getClanIconUrl(crownHolders.bellatra.IconID)} alt={crownHolders.bellatra.ClanName} width={36} height={36} style={{ border: '1px solid rgba(184,155,94,0.3)' }} />
                   <div>
                     <div style={{ fontWeight: 700, color: 'var(--toa-bone)', fontSize: '0.875rem' }}>{crownHolders.bellatra.ClanName}</div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--toa-muted)' }}>Points: <span style={{ color: 'var(--toa-gold)' }}>{crownHolders.bellatra.BellatraPoints?.toLocaleString() || 'N/A'}</span></div>

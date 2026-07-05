@@ -3,7 +3,6 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
 import { PageShell } from '@/app/components/PageShell';
 import { Wifi, WifiOff, Star, X } from 'lucide-react';
 
@@ -226,13 +225,13 @@ export default function CharactersPage() {
                   <div style={{ fontSize: '0.78rem', color: 'var(--toa-muted)', marginTop: '0.15rem' }}>Reborn Stage <span style={{ color: 'var(--toa-gold-bright)', fontWeight: 600 }}>{char.RebornStage ?? 0}</span></div>
                 </div>
                 <div style={{ textAlign: 'center', flexShrink: 0 }}>
-                  <Image
+                  <img
                     src={classDetails[char.JobCode]?.image || '/images/CharClass/0.png'}
                     alt="Class"
                     width={52}
                     height={52}
                     style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(184,155,94,0.15)', padding: '0.3rem' }}
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/CharClass/0.png'; }}
+                    onError={(e) => { e.currentTarget.src = '/images/CharClass/0.png'; }}
                   />
                   <div style={{ fontSize: '0.68rem', color: 'var(--toa-muted)', marginTop: '0.25rem' }}>{classDetails[char.JobCode]?.name || 'Unknown'}</div>
                 </div>
@@ -291,13 +290,13 @@ export default function CharactersPage() {
 
                 {char.ClanID > 0 ? (
                   <div className="toa-panel" style={{ padding: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <Image
+                    <img
                       src={getClanIconUrl(char.ClanID, iconBust)}
                       alt="Clan"
                       width={28}
                       height={28}
                       style={{ border: '1px solid rgba(184,155,94,0.2)', flexShrink: 0 }}
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://taleofasia.com/ClanImage/999999.bmp'; }}
+                      onError={(e) => { e.currentTarget.src = 'https://taleofasia.com/ClanImage/999999.bmp'; }}
                     />
                     <div>
                       <div style={{ fontSize: '0.875rem', color: 'var(--toa-bone)', fontWeight: 600 }}>{char.ClanName}</div>

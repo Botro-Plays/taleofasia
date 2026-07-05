@@ -1,6 +1,5 @@
  'use client';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import CookieConsent from '@/app/components/CookieConsent';
@@ -65,7 +64,7 @@ export function GlobalTheme({ children, showNav = true, showFooter = true, showT
                   <span className="toa-ticker-dot" />
                 )}
                 {item.icon !== undefined && item.icon !== 0 && (
-                  <Image
+                  <img
                     src={`https://taleofasia.com/ClanImage/${
                       item.icon >= 1 && item.icon <= 9 ? 100000 + item.icon :
                       item.icon >= 10 && item.icon <= 99 ? 10000 + item.icon :
@@ -76,7 +75,7 @@ export function GlobalTheme({ children, showNav = true, showFooter = true, showT
                     width={16}
                     height={16}
                     style={{ borderRadius: '2px', flexShrink: 0 }}
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
                 )}
                 <strong>{item.value}</strong>

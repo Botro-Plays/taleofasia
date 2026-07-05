@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
 import { Trophy, Crosshair, Award, Crown } from 'lucide-react';
 import { PageShell } from '@/app/components/PageShell';
 
@@ -255,14 +254,14 @@ export default function RankingsPage() {
         if (selectedSubType === 'clan') {
           return (
             <div className="flex items-center gap-2">
-              <Image
+              <img
                 src={getClanIconUrl(player.IconID || 0)}
                 alt="Clan"
                 width={32}
                 height={32}
                 className="w-8 h-8 rounded"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = 'https://taleofasia.com/ClanImage/999999.bmp';
+                  e.currentTarget.src = 'https://taleofasia.com/ClanImage/999999.bmp';
                 }}
               />
             </div>
@@ -270,14 +269,14 @@ export default function RankingsPage() {
         }
         return (
           <div className="flex items-center gap-2">
-            <Image
+            <img
               src={getClanIconUrl(player.IconID || player.ClanID || 0)}
               alt="Clan"
               width={32}
               height={32}
               className="w-8 h-8 rounded"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = 'https://taleofasia.com/ClanImage/999999.bmp';
+                e.currentTarget.src = 'https://taleofasia.com/ClanImage/999999.bmp';
               }}
             />
             <span>{player.ClanName || 'None'}</span>
@@ -287,14 +286,14 @@ export default function RankingsPage() {
         if (selectedSubType === 'clan') {
           return (
             <div className="flex items-center gap-2">
-              <Image
+              <img
                 src={getClanIconUrl(player.IconID || 0)}
                 alt="Clan"
                 width={32}
                 height={32}
                 className="w-8 h-8 rounded"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = 'https://taleofasia.com/ClanImage/999999.bmp';
+                  e.currentTarget.src = 'https://taleofasia.com/ClanImage/999999.bmp';
                 }}
               />
               <span style={{ fontWeight: 500 }}>{player.ClanName || 'Unknown'}</span>
@@ -304,14 +303,14 @@ export default function RankingsPage() {
         return <span>{player.ClanName || 'Unknown'}</span>;
       case 'Class':
         return (
-          <Image
+          <img
             src={`/images/CharClass/${player.JobCode}.png`}
             alt="Class"
             width={24}
             height={24}
             className="w-6 h-6"
             onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = '/images/CharClass/0.png';
+              e.currentTarget.src = '/images/CharClass/0.png';
             }}
           />
         );
@@ -484,17 +483,17 @@ export default function RankingsPage() {
                           color: medal ? medal.color : 'var(--toa-muted)',
                         }}>#{globalRank + 1}</span>
                         {selectedSubType !== 'clan' && (
-                          <Image src={`/images/CharClass/${player.JobCode}.png`} alt="Class" width={26} height={26}
-                            onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/CharClass/0.png'; }} />
+                          <img src={`/images/CharClass/${player.JobCode}.png`} alt="Class" width={26} height={26}
+                            onError={(e) => { e.currentTarget.src = '/images/CharClass/0.png'; }} />
                         )}
                         <span style={{ fontWeight: 600, fontSize: '0.9rem', color: medal ? medal.color : 'var(--toa-bone)' }}>
                           {player.Name || player.ClanName}
                         </span>
                       </div>
                       {player.ClanID > 0 && (
-                        <Image src={getClanIconUrl(player.IconID || player.ClanID || 0)} alt="Clan" width={26} height={26}
+                        <img src={getClanIconUrl(player.IconID || player.ClanID || 0)} alt="Clan" width={26} height={26}
                           className="rounded"
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).src = 'https://taleofasia.com/ClanImage/999999.bmp'; }} />
+                          onError={(e) => { e.currentTarget.src = 'https://taleofasia.com/ClanImage/999999.bmp'; }} />
                       )}
                     </div>
                     <div className="grid grid-cols-3 gap-1">

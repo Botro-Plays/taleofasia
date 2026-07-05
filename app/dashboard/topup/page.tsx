@@ -4,7 +4,6 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import Image from 'next/image';
 import { PageShell } from '@/app/components/PageShell';
 import { CryptoWalletPanel } from '@/app/components/CryptoWalletPanel';
 import { CryptoWalletProvider } from '@/app/components/CryptoWalletProvider';
@@ -1229,7 +1228,7 @@ export default function TopUpPage() {
                   {selectedMethod === 'GCash' && (
                     <div className="toa-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.875rem', alignItems: 'center' }}>
                       <div style={{ fontSize: '0.8rem', color: 'var(--toa-muted)', textAlign: 'center' }}>Scan this QR code and include your order ID in the note if possible.</div>
-                      <Image src="https://taleofasia.com/images/gcash_updated.png" alt="GCash QR Code" width={200} height={200} style={{ border: '1px solid rgba(184,155,94,0.15)' }} />
+                      <img src="https://taleofasia.com/images/gcash_updated.png" alt="GCash QR Code" width={200} height={200} style={{ border: '1px solid rgba(184,155,94,0.15)' }} />
                       <div style={{ fontSize: '0.7rem', color: 'var(--toa-muted)', textAlign: 'center' }}>Staff will verify and award your coins once the transaction is confirmed.</div>
                     </div>
                   )}
