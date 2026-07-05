@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { userDB } from '@/lib/db';
-import { execSync, execFileSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { readFileSync, existsSync, writeFileSync, unlinkSync, statSync } from 'fs';
 import { join } from 'path';
 
@@ -171,8 +171,9 @@ export async function POST(request: NextRequest) {
     if (action === 'restart-all') {
       // Trigger the monitor script directly (forces full restart)
       try {
-        execSync(
-          'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\\taleofasia-server-project\\servers\\monitor.ps1"',
+        execFileSync(
+          'powershell',
+          ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1'],
           { timeout: 180000, encoding: 'utf-8' }
         );
       } catch {
@@ -189,16 +190,19 @@ export async function POST(request: NextRequest) {
 
     if (action === 'restart-games') {
       // Only restart game servers (not login)
+      const psScript = [
+        "Get-Process -Name Server -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*game-server1*' -or $_.Path -like '*game-server2*' } | Stop-Process -Force",
+        "Start-Sleep 3",
+        "$g1 = Get-Process -Name Server -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*game-server1*' }",
+        "if (-not $g1) { Start-Process -FilePath 'C:\\taleofasia-server-project\\servers\\game-server1\\Server.exe' -WorkingDirectory 'C:\\taleofasia-server-project\\servers\\game-server1' -WindowStyle Normal }",
+        "Start-Sleep 20",
+        "$g2 = Get-Process -Name Server -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*game-server2*' }",
+        "if (-not $g2) { Start-Process -FilePath 'C:\\taleofasia-server-project\\servers\\game-server2\\Server.exe' -WorkingDirectory 'C:\\taleofasia-server-project\\servers\\game-server2' -WindowStyle Normal }",
+      ].join('; ');
       try {
-        // Kill game servers, then start them in order
-        execSync(
-          'powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command "' +
-          'Get-Process -Name Server -ErrorAction SilentlyContinue | Where-Object { $_.Path -like \'*game-server1*\' -or $_.Path -like \'*game-server2*\' } | Stop-Process -Force; ' +
-          'Start-Sleep 3; ' +
-          'Start-Process -FilePath \'C:\\taleofasia-server-project\\servers\\game-server1\\Server.exe\' -WorkingDirectory \'C:\\taleofasia-server-project\\servers\\game-server1\' -WindowStyle Normal; ' +
-          'Start-Sleep 20; ' +
-          'Start-Process -FilePath \'C:\\taleofasia-server-project\\servers\\game-server2\\Server.exe\' -WorkingDirectory \'C:\\taleofasia-server-project\\servers\\game-server2\' -WindowStyle Normal' +
-          '"',
+        execFileSync(
+          'powershell',
+          ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', psScript],
           { timeout: 60000, encoding: 'utf-8' }
         );
       } catch {
