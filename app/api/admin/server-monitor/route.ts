@@ -5,7 +5,6 @@ import { execFile, spawn } from 'child_process';
 import { readFileSync, existsSync, writeFileSync, unlinkSync, statSync } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
-import { createConnection } from 'net';
 
 const execFileAsync = promisify(execFile);
 
@@ -46,18 +45,6 @@ async function checkAdmin(username: string) {
   return user.GameMasterType === 1 && user.GameMasterLevel >= 3;
 }
 
-function checkPort(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const socket = createConnection({ host: '127.0.0.1', port }, () => {
-      socket.destroy();
-      resolve(true);
-    });
-    socket.setTimeout(2000);
-    socket.on('error', () => resolve(false));
-    socket.on('timeout', () => { socket.destroy(); resolve(false); });
-  });
-}
-
 async function getServerStatus() {
   const servers: Array<{
     key: string;
@@ -69,10 +56,22 @@ async function getServerStatus() {
     uptimeSeconds: number | null;
   }> = [];
 
-  // Use non-invasive TCP port checks instead of Get-Process (which opens handles to Server.exe)
+  // Run netstat once and check all UDP ports (non-invasive, no handle access to Server.exe)
+  let netstatOutput = '';
+  try {
+    const { stdout } = await execFileAsync('netstat', ['-ano'], { timeout: 5000, encoding: 'utf-8' });
+    netstatOutput = stdout;
+  } catch {
+    // netstat failed
+  }
+
   for (const [key, exePath] of Object.entries(SERVER_PATHS)) {
     const port = SERVER_PORTS[key];
-    const running = await checkPort(port);
+    const running = netstatOutput.split('\n').some(line =>
+      line.includes('UDP') &&
+      line.includes(`:${port}`) &&
+      line.trim().length > 0
+    );
     servers.push({
       key,
       label: SERVER_LABELS[key],
