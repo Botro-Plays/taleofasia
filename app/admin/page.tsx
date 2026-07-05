@@ -10,6 +10,7 @@ import {
   Timer, ScrollText, BarChart2, FileText, Zap, Newspaper,
   ChevronLeft, AlertTriangle, CheckCircle, WifiOff, Clock,
   XCircle, TrendingUp, ShieldAlert, Vote, Package, ShieldBan, ShoppingBag,
+  Server,
 } from 'lucide-react';
 
 export default function AdminDashboardPage() {
@@ -127,6 +128,7 @@ export default function AdminDashboardPage() {
     { Icon: CreditCard, title: 'Payments',           description: 'Transactions and payment gateways',    href: '/admin/payments',       accent: 'var(--toa-ember)' },
     { Icon: DollarSign, title: 'Finances',           description: 'Packages, pricing, and revenue',       href: '/admin/finances',       accent: 'var(--toa-success)' },
     { Icon: Timer,      title: 'Cron Monitor',       description: 'Scheduled jobs and manual triggers',   href: '/admin/cron',           accent: 'var(--toa-warning)' },
+    { Icon: Server,     title: 'Server Monitor',     description: 'Game server status, auto-restart, and logs', href: '/admin/server-monitor', accent: 'var(--toa-success)' },
     { Icon: ScrollText, title: 'Audit Logs',         description: 'System logs and user activity',        href: '/admin/logs',           accent: 'var(--toa-info)' },
     { Icon: Vote,      title: 'Voting Logs',        description: 'Vote records and reward claims',       href: '/admin/voting-logs',    accent: 'var(--toa-success)' },
     { Icon: BarChart2,  title: 'Game Logs',          description: 'Read-only search across LogDB',        href: '/admin/game-logs',      accent: 'var(--toa-muted)' },
