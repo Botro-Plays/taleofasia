@@ -281,12 +281,12 @@ export default function ServerMonitorPage() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                   <span style={{ color: 'var(--toa-muted)' }}>Port</span>
-                  <span style={{ color: 'var(--toa-bone)' }}>TCP {srv.port}</span>
+                  <span style={{ color: 'var(--toa-bone)' }}>UDP {srv.port}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                   <span style={{ color: 'var(--toa-muted)' }}>Connection</span>
                   <span style={{ color: srv.running ? 'var(--toa-success)' : 'var(--toa-danger)' }}>
-                    {srv.running ? 'Listening' : 'No response'}
+                    {srv.running ? 'Bound' : 'No response'}
                   </span>
                 </div>
               </div>
