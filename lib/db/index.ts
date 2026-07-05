@@ -177,6 +177,11 @@ export async function txQuery<T = any>(
   queryString: string,
   params?: Record<string, any>
 ): Promise<sql.IResult<T>> {
+  // Clear parameters from any previous txQuery call on this shared request
+  const req = request as any;
+  if (req.parameters) {
+    req.parameters = {};
+  }
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       request.input(key, value);
