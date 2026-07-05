@@ -270,9 +270,9 @@ export default function ServerMonitorPage() {
           ))}
         </div>
 
-        {/* ACTION BUTTONS */}
-        <div className="toa-label" style={{ marginBottom: '1rem' }}>Controls</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '2.5rem' }}>
+        {/* MONITOR CONTROLS */}
+        <div className="toa-label" style={{ marginBottom: '1rem' }}>Monitor Controls</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '2rem' }}>
           {monitoringPaused ? (
             <button
               onClick={() => handleAction('resume')}
@@ -294,7 +294,11 @@ export default function ServerMonitorPage() {
               {actionLoading === 'pause' ? 'Pausing…' : 'Pause Monitor'}
             </button>
           )}
+        </div>
 
+        {/* SERVER CONTROLS */}
+        <div className="toa-label" style={{ marginBottom: '1rem' }}>Server Controls</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '2.5rem' }}>
           <button
             onClick={() => handleAction('restart-games')}
             disabled={actionLoading !== null}
@@ -312,7 +316,7 @@ export default function ServerMonitorPage() {
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'var(--toa-danger)', borderColor: 'var(--toa-danger)', color: '#fff' }}
           >
             <Power size={15} />
-            {actionLoading === 'restart-all' ? 'Full Restart…' : 'Full Restart (All Servers)'}
+            {actionLoading === 'restart-all' ? 'Full Restart…' : 'Restart All Servers'}
           </button>
         </div>
 

@@ -189,21 +189,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'restart-games') {
-      // Only restart game servers (not login)
-      const psScript = [
-        "Get-Process -Name Server -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*game-server1*' -or $_.Path -like '*game-server2*' } | Stop-Process -Force",
-        "Start-Sleep 3",
-        "$g1 = Get-Process -Name Server -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*game-server1*' }",
-        "if (-not $g1) { Start-Process -FilePath 'C:\\taleofasia-server-project\\servers\\game-server1\\Server.exe' -WorkingDirectory 'C:\\taleofasia-server-project\\servers\\game-server1' -WindowStyle Normal }",
-        "Start-Sleep 20",
-        "$g2 = Get-Process -Name Server -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*game-server2*' }",
-        "if (-not $g2) { Start-Process -FilePath 'C:\\taleofasia-server-project\\servers\\game-server2\\Server.exe' -WorkingDirectory 'C:\\taleofasia-server-project\\servers\\game-server2' -WindowStyle Normal }",
-      ].join('; ');
+      // Restart only game servers via monitor.ps1 -ForceRestartGames
       try {
         execFileSync(
           'powershell',
-          ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', psScript],
-          { timeout: 60000, encoding: 'utf-8' }
+          ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1', '-ForceRestartGames'],
+          { timeout: 120000, encoding: 'utf-8' }
         );
       } catch {
         // Check if servers came up anyway
