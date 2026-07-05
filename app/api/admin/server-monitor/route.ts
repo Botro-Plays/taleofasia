@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { userDB } from '@/lib/db';
-import { execFileSync } from 'child_process';
+import { execFileSync, spawn } from 'child_process';
 import { readFileSync, existsSync, writeFileSync, unlinkSync, statSync } from 'fs';
 import { join } from 'path';
 
@@ -169,41 +169,33 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'restart-all') {
-      // Trigger the monitor script with -ForceRestart flag (stops all, restarts in order)
-      try {
-        execFileSync(
-          'powershell',
-          ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1', '-ForceRestart'],
-          { timeout: 180000, encoding: 'utf-8' }
-        );
-      } catch {
-        // The script may take a while; check if servers came up
-      }
+      // Spawn monitor.ps1 with -ForceRestart in the background (non-blocking)
+      // The script takes 60-90+ seconds; we don't wait for it to finish
+      const child = spawn(
+        'powershell',
+        ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1', '-ForceRestart'],
+        { detached: true, stdio: 'ignore' }
+      );
+      child.unref();
 
-      // Re-check status after restart
-      const servers = getServerStatus();
       return NextResponse.json({
-        message: 'Full restart completed',
-        servers,
+        message: 'Full restart initiated. Servers will come back online in 60-90 seconds. Monitor the log for progress.',
+        restartInitiated: true,
       });
     }
 
     if (action === 'restart-games') {
-      // Restart only game servers via monitor.ps1 -ForceRestartGames
-      try {
-        execFileSync(
-          'powershell',
-          ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1', '-ForceRestartGames'],
-          { timeout: 120000, encoding: 'utf-8' }
-        );
-      } catch {
-        // Check if servers came up anyway
-      }
+      // Spawn monitor.ps1 with -ForceRestartGames in the background (non-blocking)
+      const child = spawn(
+        'powershell',
+        ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1', '-ForceRestartGames'],
+        { detached: true, stdio: 'ignore' }
+      );
+      child.unref();
 
-      const servers = getServerStatus();
       return NextResponse.json({
-        message: 'Game servers restarted',
-        servers,
+        message: 'Game server restart initiated. Servers will come back online in 20-40 seconds. Monitor the log for progress.',
+        restartInitiated: true,
       });
     }
 
