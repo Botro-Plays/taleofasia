@@ -352,7 +352,7 @@ export default function ServerMonitorPage() {
           <Monitor size={14} style={{ display: 'inline', marginRight: '0.4rem', verticalAlign: 'middle' }} />
           Monitor Log (last 50 entries)
         </div>
-        <div className="toa-seal-card" style={{ padding: '1.5rem', position: 'relative', maxHeight: '400px', overflowY: 'auto' }}>
+        <div className="toa-seal-card" style={{ padding: '1.5rem', position: 'relative', maxHeight: '400px', overflowY: 'auto', marginBottom: '2.5rem' }}>
           <div className="toa-seal-corner toa-seal-corner-tl" />
           <div className="toa-seal-corner toa-seal-corner-br" />
           {recentLogs.length === 0 ? (
