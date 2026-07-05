@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { userDB } from '@/lib/db';
-import { execSync } from 'child_process';
+import { execSync, execFileSync } from 'child_process';
 import { readFileSync, existsSync, writeFileSync, unlinkSync, statSync } from 'fs';
 import { join } from 'path';
 
@@ -50,8 +50,10 @@ function getServerStatus() {
   // Get all Server.exe processes with their paths
   const processMap: Map<string, { pid: number; startTime: Date }> = new Map();
   try {
-    const output = execSync(
-      'powershell -NoProfile -Command "Get-Process -Name Server -ErrorAction SilentlyContinue | ForEach-Object { \\"{0}|{1}|{2}\\" -f $_.Id, $_.Path, $_.StartTime.ToString(\'o\') }"',
+    const psScript = "Get-Process -Name Server -ErrorAction SilentlyContinue | ForEach-Object { Write-Output ($_.Id.ToString() + '|' + $_.Path + '|' + $_.StartTime.ToString('o')) }";
+    const output = execFileSync(
+      'powershell',
+      ['-NoProfile', '-Command', psScript],
       { timeout: 5000, encoding: 'utf-8' }
     ).trim();
 
