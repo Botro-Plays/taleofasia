@@ -20,6 +20,7 @@ const ReCaptcha = forwardRef<ReCaptchaRef, ReCaptchaProps>(
     const renderedRef = useRef(false);
     const v3ReadyRef = useRef(false);
     const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>('loading');
+    const [retryCount, setRetryCount] = useState(0);
 
     useEffect(() => {
       if (!siteKey) return;
@@ -48,38 +49,53 @@ const ReCaptcha = forwardRef<ReCaptchaRef, ReCaptchaProps>(
 
       // v2
       const scriptId = 'recaptcha-v2-script';
-      const existing = document.getElementById(scriptId) as HTMLScriptElement | null;
+      let existing = document.getElementById(scriptId) as HTMLScriptElement | null;
 
-      const renderWidget = (retries = 10) => {
-        if (!containerRef.current) return;
+      // On retry, remove the old script tag if it failed to load
+      if (existing && retryCount > 0) {
+        existing.remove();
+        existing = null;
+        renderedRef.current = false;
+        widgetIdRef.current = null;
+      }
+
+      let retryTimer: ReturnType<typeof setTimeout> | null = null;
+      let cancelled = false;
+
+      const renderWidget = (retries = 30) => {
+        if (cancelled || !containerRef.current) return;
         const grecaptcha = (window as any).grecaptcha;
         if (!grecaptcha?.render) {
           if (retries > 0) {
-            setTimeout(() => renderWidget(retries - 1), 200);
+            retryTimer = setTimeout(() => renderWidget(retries - 1), 300);
             return;
           }
           setLoadState('error');
           return;
         }
-        if (widgetIdRef.current !== null) {
-          grecaptcha.reset(widgetIdRef.current);
-        }
-        if (renderedRef.current) return;
-        renderedRef.current = true;
-        try {
-          widgetIdRef.current = grecaptcha.render(containerRef.current, {
-            sitekey: siteKey,
-            callback: (token: string) => onVerify?.(token),
-            'expired-callback': () => onVerify?.(null),
-            'error-callback': () => {
-              onVerify?.(null);
-              setLoadState('error');
-            },
-          });
-          setLoadState('ready');
-        } catch {
-          setLoadState('error');
-        }
+        // Use grecaptcha.ready() for reliable initialization
+        grecaptcha.ready(() => {
+          if (cancelled || !containerRef.current) return;
+          if (widgetIdRef.current !== null) {
+            try { grecaptcha.reset(widgetIdRef.current); } catch {}
+          }
+          if (renderedRef.current) return;
+          renderedRef.current = true;
+          try {
+            widgetIdRef.current = grecaptcha.render(containerRef.current, {
+              sitekey: siteKey,
+              callback: (token: string) => onVerify?.(token),
+              'expired-callback': () => onVerify?.(null),
+              'error-callback': () => {
+                onVerify?.(null);
+                setLoadState('error');
+              },
+            });
+            setLoadState('ready');
+          } catch {
+            setLoadState('error');
+          }
+        });
       };
 
       if (existing) {
@@ -91,18 +107,22 @@ const ReCaptcha = forwardRef<ReCaptchaRef, ReCaptchaProps>(
         script.async = true;
         script.defer = true;
         script.onload = () => renderWidget();
-        script.onerror = () => setLoadState('error');
+        script.onerror = () => {
+          if (!cancelled) setLoadState('error');
+        };
         document.head.appendChild(script);
       }
 
       return () => {
+        cancelled = true;
+        if (retryTimer) clearTimeout(retryTimer);
         if (widgetIdRef.current !== null && (window as any).grecaptcha) {
-          (window as any).grecaptcha.reset(widgetIdRef.current);
+          try { (window as any).grecaptcha.reset(widgetIdRef.current); } catch {}
           widgetIdRef.current = null;
         }
         renderedRef.current = false;
       };
-    }, [siteKey, version, action, onVerify]);
+    }, [siteKey, version, action, onVerify, retryCount]);
 
     useImperativeHandle(ref, () => ({
       execute: () => new Promise((resolve, reject) => {
@@ -139,9 +159,18 @@ const ReCaptcha = forwardRef<ReCaptchaRef, ReCaptchaProps>(
           <div className="text-sm text-slate-400 animate-pulse">Loading reCAPTCHA...</div>
         )}
         {loadState === 'error' && (
-          <div className="text-sm text-red-400 border border-red-600/40 bg-red-900/20 rounded p-2">
-            Failed to load reCAPTCHA. Check your browser console (F12) for errors.
-            Common causes: ad blockers, CSP restrictions, or invalid site key.
+          <div className="text-sm text-red-400 border border-red-600/40 bg-red-900/20 rounded p-2 flex flex-col items-center gap-2">
+            <span>Failed to load reCAPTCHA. Common causes: ad blockers, browser extensions, or network restrictions.</span>
+            <button
+              type="button"
+              onClick={() => {
+                setLoadState('loading');
+                setRetryCount(c => c + 1);
+              }}
+              className="text-xs px-3 py-1 rounded border border-red-600/50 hover:bg-red-900/40 transition-colors"
+            >
+              Retry
+            </button>
           </div>
         )}
         <div ref={containerRef} />
