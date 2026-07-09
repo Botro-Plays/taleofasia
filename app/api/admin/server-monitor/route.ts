@@ -5,6 +5,7 @@ import { execFile, spawn } from 'child_process';
 import { readFileSync, existsSync, writeFileSync, unlinkSync, statSync } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
+import { createSocket } from 'dgram';
 
 const execFileAsync = promisify(execFile);
 
@@ -36,6 +37,44 @@ const SERVER_PORTS: Record<string, number> = {
   'game-server2': 10026,
 };
 
+// [Cascade] UDP status daemon ports for liveness ping.
+// Login=10010, GS1=10011, GS2=10012.
+const STATUS_PORTS: Record<string, number> = {
+  'login-server': 10010,
+  'game-server1': 10011,
+  'game-server2': 10012,
+};
+
+// [Cascade] UDP ping function: sends PING to the server's status daemon port.
+// Returns true if the server responded within the timeout.
+function pingServer(port: number, timeoutMs: number = 1000): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      const socket = createSocket('udp4');
+      const msg = Buffer.from('PING');
+      let settled = false;
+
+      socket.on('error', () => {
+        if (!settled) { settled = true; socket.close(); resolve(false); }
+      });
+
+      socket.on('message', () => {
+        if (!settled) { settled = true; clearTimeout(timer); socket.close(); resolve(true); }
+      });
+
+      const timer = setTimeout(() => {
+        if (!settled) { settled = true; socket.close(); resolve(false); }
+      }, timeoutMs);
+
+      socket.send(msg, 0, msg.length, port, '127.0.0.1', (err) => {
+        if (err && !settled) { settled = true; clearTimeout(timer); socket.close(); resolve(false); }
+      });
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
 async function checkAdmin(username: string) {
   const adminCheck = await userDB.query(`
     SELECT GameMasterType, GameMasterLevel FROM UserInfo WHERE AccountName = @username
@@ -56,14 +95,24 @@ async function getServerStatus() {
     uptimeSeconds: number | null;
   }> = [];
 
-  // Run netstat once and check all UDP ports (non-invasive, no handle access to Server.exe)
+  // [Cascade] Primary check: UDP ping all status daemon ports in parallel.
+  const pingResults: Record<string, boolean> = {};
+  const pingPromises = Object.entries(STATUS_PORTS).map(async ([key, port]) => {
+    pingResults[key] = await pingServer(port, 1000);
+  });
+
+  // Also run netstat in parallel for PID/uptime info
   let netstatOutput = '';
-  try {
-    const { stdout } = await execFileAsync('netstat', ['-ano'], { timeout: 5000, encoding: 'utf-8' });
-    netstatOutput = stdout;
-  } catch {
-    // netstat failed
-  }
+  const netstatPromise = (async () => {
+    try {
+      const { stdout } = await execFileAsync('netstat', ['-ano'], { timeout: 5000, encoding: 'utf-8' });
+      netstatOutput = stdout;
+    } catch {
+      // netstat failed
+    }
+  })();
+
+  await Promise.all([...pingPromises, netstatPromise]);
 
   // Extract PIDs for each server port from netstat output
   const pidMap: Record<string, number | null> = {};
@@ -79,6 +128,14 @@ async function getServerStatus() {
       pidMap[key] = pid > 0 ? pid : null;
     } else {
       pidMap[key] = null;
+    }
+  }
+
+  // [Cascade] Fallback: if UDP ping failed but netstat shows the port is bound,
+  // consider the server running (status daemon might be temporarily unresponsive).
+  for (const [key, port] of Object.entries(SERVER_PORTS)) {
+    if (!pingResults[key] && pidMap[key] !== null) {
+      pingResults[key] = true;
     }
   }
 
@@ -112,7 +169,7 @@ async function getServerStatus() {
   for (const [key] of Object.entries(SERVER_PATHS)) {
     const port = SERVER_PORTS[key];
     const pid = pidMap[key];
-    const running = pid !== null;
+    const running = pingResults[key] ?? false;
     const startTime = pid ? creationTimes[pid] ?? null : null;
     const uptimeSeconds = startTime ? Math.floor((now - startTime.getTime()) / 1000) : null;
 
