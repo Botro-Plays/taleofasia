@@ -3,9 +3,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDraggable } from '@/app/components/useDraggable';
 
+interface ServerInfo {
+  status: 'online' | 'offline' | 'maintenance';
+  onlineUsers: number;
+}
+
 interface ServerStatus {
   status: 'online' | 'offline' | 'maintenance';
   onlineUsers: number;
+  servers?: {
+    login: ServerInfo;
+    game1: ServerInfo;
+    game2: ServerInfo;
+  };
 }
 
 interface CrownHolders {
@@ -86,16 +96,46 @@ export function DraggableCommandBar() {
       {...dragHandlers}
     >
       <div className="toa-command-cell" style={isVertical ? { padding: '0.4rem 0' } : undefined}>
-        <div className="toa-command-label">Server</div>
+        <div className="toa-command-label">Login</div>
         <div className="toa-command-value">
           {statusLoading ? (
             <span>Loading...</span>
           ) : (
             <>
-              <div className={`toa-status-dot ${serverStatus.status}`} />
-              <span>{serverStatus.status.toUpperCase()}</span>
+              <div className={`toa-status-dot ${(serverStatus.servers?.login?.status ?? serverStatus.status)}`} />
+              <span>{(serverStatus.servers?.login?.status ?? serverStatus.status).toUpperCase()}</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="toa-command-divider" style={isVertical ? { width: '80%', height: '1px', margin: '0.25rem 0' } : undefined} />
+      <div className="toa-command-cell" style={isVertical ? { padding: '0.4rem 0' } : undefined}>
+        <div className="toa-command-label">GS1 (PH)</div>
+        <div className="toa-command-value">
+          {statusLoading ? (
+            <span>Loading...</span>
+          ) : (
+            <>
+              <div className={`toa-status-dot ${(serverStatus.servers?.game1?.status ?? 'offline')}`} />
+              <span>{(serverStatus.servers?.game1?.status ?? 'offline').toUpperCase()}</span>
               <span className="toa-command-sep">|</span>
-              <span>{serverStatus.onlineUsers.toLocaleString()} {serverStatus.onlineUsers <= 1 ? 'user' : 'users'}</span>
+              <span>{(serverStatus.servers?.game1?.onlineUsers ?? 0)} {(serverStatus.servers?.game1?.onlineUsers ?? 0) <= 1 ? 'user' : 'users'}</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="toa-command-divider" style={isVertical ? { width: '80%', height: '1px', margin: '0.25rem 0' } : undefined} />
+      <div className="toa-command-cell" style={isVertical ? { padding: '0.4rem 0' } : undefined}>
+        <div className="toa-command-label">GS2 (SG)</div>
+        <div className="toa-command-value">
+          {statusLoading ? (
+            <span>Loading...</span>
+          ) : (
+            <>
+              <div className={`toa-status-dot ${(serverStatus.servers?.game2?.status ?? 'offline')}`} />
+              <span>{(serverStatus.servers?.game2?.status ?? 'offline').toUpperCase()}</span>
+              <span className="toa-command-sep">|</span>
+              <span>{(serverStatus.servers?.game2?.onlineUsers ?? 0)} {(serverStatus.servers?.game2?.onlineUsers ?? 0) <= 1 ? 'user' : 'users'}</span>
             </>
           )}
         </div>

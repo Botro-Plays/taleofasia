@@ -12,9 +12,19 @@ interface CrownHolders {
   surviveOrDie: { clanName: string; iconID: number } | null;
 }
 
+interface ServerInfo {
+  status: 'online' | 'offline' | 'maintenance';
+  onlineUsers: number;
+}
+
 interface ServerStatus {
   status: 'online' | 'offline' | 'maintenance';
   onlineUsers: number;
+  servers?: {
+    login: ServerInfo;
+    game1: ServerInfo;
+    game2: ServerInfo;
+  };
 }
 
 const CLASS_DATA = [
@@ -122,10 +132,26 @@ export default function Home() {
     { label: 'Active Players', value: stats.activePlayers >= 1000 ? `${(stats.activePlayers / 1000).toFixed(1)}K` : `${stats.activePlayers}` },
     { label: 'Classes', value: '10' },
     { label: 'to Play', value: 'Free' },
+    // [Cascade] Per-server status in ticker
     {
-      label: 'Server',
-      value: serverStatus.status === 'online' ? `${serverStatus.onlineUsers} ${serverStatus.onlineUsers <= 1 ? 'user' : 'users'}` :
-             serverStatus.status === 'maintenance' ? 'Maintenance' : 'Offline',
+      label: 'Login Server',
+      value: serverStatus.servers?.login?.status === 'online' ? 'Online' :
+             serverStatus.servers?.login?.status === 'maintenance' ? 'Maintenance' : 'Offline',
+      statusColor: serverStatus.servers?.login?.status ?? serverStatus.status,
+    },
+    {
+      label: 'GS1 (PH) Users',
+      value: serverStatus.servers?.game1 ? `${serverStatus.servers.game1.onlineUsers} ${serverStatus.servers.game1.onlineUsers <= 1 ? 'user' : 'users'}` : '0 users',
+      statusColor: serverStatus.servers?.game1?.status ?? 'offline',
+    },
+    {
+      label: 'GS2 (SG) Users',
+      value: serverStatus.servers?.game2 ? `${serverStatus.servers.game2.onlineUsers} ${serverStatus.servers.game2.onlineUsers <= 1 ? 'user' : 'users'}` : '0 users',
+      statusColor: serverStatus.servers?.game2?.status ?? 'offline',
+    },
+    {
+      label: 'Total Online',
+      value: `${serverStatus.onlineUsers} ${serverStatus.onlineUsers <= 1 ? 'user' : 'users'}`,
       statusColor: serverStatus.status,
     },
     { label: 'Bless Castle', value: crownHolders.blessCastle?.clanName || 'Vacant', icon: crownHolders.blessCastle?.iconID },
