@@ -289,6 +289,20 @@ export default function ServerMonitorPage() {
                     {srv.running ? 'Bound' : 'No response'}
                   </span>
                 </div>
+                {srv.running && srv.uptimeSeconds !== null && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                    <span style={{ color: 'var(--toa-muted)' }}>Uptime</span>
+                    <span style={{ color: 'var(--toa-gold-bright)', fontWeight: 600 }}>
+                      {formatUptime(srv.uptimeSeconds)}
+                    </span>
+                  </div>
+                )}
+                {srv.running && srv.pid !== null && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
+                    <span style={{ color: 'var(--toa-muted)' }}>PID</span>
+                    <span style={{ color: 'var(--toa-bone)' }}>{srv.pid}</span>
+                  </div>
+                )}
               </div>
 
               {/* Per-server restart button */}

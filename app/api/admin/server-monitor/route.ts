@@ -52,7 +52,7 @@ async function getServerStatus() {
     port: number;
     running: boolean;
     pid: number | null;
-    startTime: Date | null;
+    startTime: string | null;
     uptimeSeconds: number | null;
   }> = [];
 
@@ -65,21 +65,65 @@ async function getServerStatus() {
     // netstat failed
   }
 
-  for (const [key, exePath] of Object.entries(SERVER_PATHS)) {
-    const port = SERVER_PORTS[key];
-    const running = netstatOutput.split('\n').some(line =>
-      line.includes('UDP') &&
-      line.includes(`:${port}`) &&
-      line.trim().length > 0
+  // Extract PIDs for each server port from netstat output
+  const pidMap: Record<string, number | null> = {};
+  for (const [key, port] of Object.entries(SERVER_PORTS)) {
+    const line = netstatOutput.split('\n').find(l =>
+      l.includes('UDP') &&
+      l.includes(`:${port} `) &&
+      l.trim().length > 0
     );
+    if (line) {
+      const parts = line.trim().split(/\s+/);
+      const pid = parseInt(parts[parts.length - 1], 10);
+      pidMap[key] = pid > 0 ? pid : null;
+    } else {
+      pidMap[key] = null;
+    }
+  }
+
+  // Get process creation times via WMI (non-invasive — no handle access to Server.exe)
+  const validPids = Object.values(pidMap).filter((p): p is number => p !== null);
+  const creationTimes: Record<number, Date> = {};
+  if (validPids.length > 0) {
+    try {
+      const pidFilter = validPids.map(p => `ProcessId=${p}`).join(' OR ');
+      const { stdout } = await execFileAsync('powershell', [
+        '-NoProfile', '-Command',
+        `Get-CimInstance Win32_Process -Filter "${pidFilter}" | ForEach-Object { [PSCustomObject]@{ ProcessId = $_.ProcessId; CreationDate = $_.CreationDate.ToString('o') } } | ConvertTo-Json -Compress`,
+      ], { timeout: 10000, encoding: 'utf-8', windowsHide: true });
+
+      const parsed = JSON.parse(stdout.trim());
+      const items = Array.isArray(parsed) ? parsed : [parsed];
+      for (const item of items) {
+        if (item.ProcessId && item.CreationDate) {
+          const d = new Date(item.CreationDate);
+          if (!isNaN(d.getTime())) {
+            creationTimes[item.ProcessId] = d;
+          }
+        }
+      }
+    } catch {
+      // WMI query failed — uptime will be null but status still works
+    }
+  }
+
+  const now = Date.now();
+  for (const [key] of Object.entries(SERVER_PATHS)) {
+    const port = SERVER_PORTS[key];
+    const pid = pidMap[key];
+    const running = pid !== null;
+    const startTime = pid ? creationTimes[pid] ?? null : null;
+    const uptimeSeconds = startTime ? Math.floor((now - startTime.getTime()) / 1000) : null;
+
     servers.push({
       key,
       label: SERVER_LABELS[key],
       port,
       running,
-      pid: null,
-      startTime: null,
-      uptimeSeconds: null,
+      pid,
+      startTime: startTime && !isNaN(startTime.getTime()) ? startTime.toISOString() : null,
+      uptimeSeconds,
     });
   }
 

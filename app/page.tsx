@@ -228,7 +228,7 @@ export default function Home() {
       </section>
 
       {/* === FEATURE SEALS: 2x2 glowing seal-stamp card grid === */}
-      <section id="features" className="toa-section" style={{ background: 'var(--toa-void)' }}>
+      <section id="features" className="toa-section" style={{ background: 'transparent' }}>
         <div className="toa-label" style={{ maxWidth: '1200px', margin: '0 auto 4rem' }}>What You're Getting Into</div>
 
         <div className="toa-seal-grid">
