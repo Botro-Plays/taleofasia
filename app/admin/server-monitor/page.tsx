@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { GlobalTheme } from '@/app/components/GlobalTheme';
 import {
   ChevronLeft, Server, Activity, Pause, Play, RefreshCw,
-  CheckCircle, XCircle, AlertTriangle, Monitor, Power,
+  CheckCircle, XCircle, AlertTriangle, Monitor, Power, Square, Lock,
 } from 'lucide-react';
 
 type ServerInfo = {
@@ -51,6 +51,17 @@ export default function ServerMonitorPage() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const rapidRefreshRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isVisibleRef = useRef(true);
+
+  // PIN modal state
+  const [pinModal, setPinModal] = useState<{
+    open: boolean;
+    action: string;
+    label: string;
+    serverKey?: string;
+    confirmText?: string;
+  } | null>(null);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -117,13 +128,17 @@ export default function ServerMonitorPage() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const handleAction = async (action: string) => {
+  const handleAction = async (action: string, pin?: string, serverKey?: string) => {
     setActionLoading(action);
     try {
+      const payload: Record<string, unknown> = { action };
+      if (pin) payload.pin = pin;
+      if (serverKey) payload.serverKey = serverKey;
+
       const res = await fetch('/api/admin/server-monitor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify(payload),
       });
       const d = await res.json();
       if (res.ok) {
@@ -131,10 +146,8 @@ export default function ServerMonitorPage() {
         await fetchData();
 
         // After restart actions, poll aggressively for 2 minutes
-        if (action === 'restart-all' || action === 'restart-games' || action === 'restart-game1' || action === 'restart-game2') {
-          // Clear any existing rapid refresh
+        if (action === 'restart-all' || action === 'restart-games') {
           if (rapidRefreshRef.current) clearTimeout(rapidRefreshRef.current);
-          // Poll every 3s for 2 minutes
           const rapidInterval = setInterval(() => { void fetchData(); }, 3000);
           rapidRefreshRef.current = setTimeout(() => {
             clearInterval(rapidInterval);
@@ -143,12 +156,37 @@ export default function ServerMonitorPage() {
         }
       } else {
         showToast(d.error || 'Action failed', 'error');
+        if (d.pinRequired) {
+          setPinError(true);
+        }
       }
     } catch {
       showToast('Network error', 'error');
     } finally {
       setActionLoading(null);
     }
+  };
+
+  // Request PIN for an action — opens the PIN modal
+  const requestPin = (action: string, label: string, serverKey?: string) => {
+    setPinInput('');
+    setPinError(false);
+    setPinModal({ open: true, action, label, serverKey });
+  };
+
+  // Submit PIN and execute the pending action
+  const submitPin = () => {
+    if (!pinModal || !pinInput) return;
+    const { action, serverKey } = pinModal;
+    setPinModal(null);
+    void handleAction(action, pinInput, serverKey);
+  };
+
+  // Cancel PIN modal
+  const cancelPin = () => {
+    setPinModal(null);
+    setPinInput('');
+    setPinError(false);
   };
 
   if (status === 'loading' || loading) {
@@ -305,18 +343,30 @@ export default function ServerMonitorPage() {
                 )}
               </div>
 
-              {/* Per-server restart button */}
-              {srv.key !== 'login-server' && (
-                <button
-                  onClick={() => handleAction(srv.key === 'game-server1' ? 'restart-game1' : 'restart-game2')}
-                  disabled={actionLoading !== null}
-                  className="toa-btn toa-btn-ghost"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.75rem', fontSize: '0.75rem', padding: '0.4rem 0.8rem', width: 'fit-content' }}
-                >
-                  <RefreshCw size={12} />
-                  {actionLoading === (srv.key === 'game-server1' ? 'restart-game1' : 'restart-game2') ? 'Restarting…' : 'Restart This Server'}
-                </button>
-              )}
+              {/* Per-server Stop / Start buttons */}
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                {srv.running ? (
+                  <button
+                    onClick={() => requestPin('stop-server', `Stop ${srv.label}`, srv.key)}
+                    disabled={actionLoading !== null}
+                    className="toa-btn toa-btn-ghost"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', padding: '0.4rem 0.8rem', width: 'fit-content', borderColor: 'rgba(180,60,60,0.4)', color: 'var(--toa-danger)' }}
+                  >
+                    <Square size={12} />
+                    Stop
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => requestPin('start-server', `Start ${srv.label}`, srv.key)}
+                    disabled={actionLoading !== null}
+                    className="toa-btn toa-btn-ghost"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', padding: '0.4rem 0.8rem', width: 'fit-content', borderColor: 'rgba(58,125,68,0.4)', color: 'var(--toa-success)' }}
+                  >
+                    <Power size={12} />
+                    Start
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -351,7 +401,7 @@ export default function ServerMonitorPage() {
         <div className="toa-label" style={{ marginBottom: '1rem' }}>Server Controls</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '2.5rem' }}>
           <button
-            onClick={() => handleAction('restart-games')}
+            onClick={() => requestPin('restart-games', 'Restart Game Servers')}
             disabled={actionLoading !== null}
             className="toa-btn toa-btn-ghost"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
@@ -361,7 +411,7 @@ export default function ServerMonitorPage() {
           </button>
 
           <button
-            onClick={() => handleAction('restart-all')}
+            onClick={() => requestPin('restart-all', 'Restart All Servers')}
             disabled={actionLoading !== null}
             className="toa-btn"
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'var(--toa-danger)', borderColor: 'var(--toa-danger)', color: '#fff' }}
@@ -446,18 +496,88 @@ export default function ServerMonitorPage() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
             <AlertTriangle size={16} style={{ color: 'var(--toa-warning)', flexShrink: 0, marginTop: '0.1rem' }} />
             <div style={{ fontSize: '0.8rem', color: 'var(--toa-muted)', lineHeight: 1.6 }}>
-              <strong style={{ color: 'var(--toa-bone)' }}>Full Restart</strong> stops all servers, starts login server, waits 30-60s, then starts game servers in sequence.
+              <strong style={{ color: 'var(--toa-bone)' }}>Restart All Servers</strong> stops all servers, starts login server, waits 45s, then starts Game Server 1, waits 25s, then starts Game Server 2.
               <br />
-              <strong style={{ color: 'var(--toa-bone)' }}>Restart Game Servers</strong> restarts both game servers without touching the login server.
+              <strong style={{ color: 'var(--toa-bone)' }}>Restart Game Servers</strong> restarts both game servers without touching the login server. Game Server 1 starts first, then Game Server 2 after 25s.
               <br />
-              <strong style={{ color: 'var(--toa-bone)' }}>Restart This Server</strong> (per-card button) restarts only that individual game server. Others are left untouched.
+              <strong style={{ color: 'var(--toa-bone)' }}>Stop / Start</strong> buttons on each server card manually control individual servers. These require the admin PIN.
               <br />
-              <strong style={{ color: 'var(--toa-bone)' }}>Auto-Monitor</strong> now restarts only the crashed game server independently. Login server crash still triggers a full restart.
+              <strong style={{ color: 'var(--toa-bone)' }}>Auto-Monitor</strong> runs via Task Scheduler every 1 minute and auto-restarts crashed servers. Login server crash triggers full restart.
               <br />
               <strong style={{ color: 'var(--toa-bone)' }}>Pause Monitor</strong> creates a pause file so the scheduled task skips checking. Remember to resume after maintenance.
+              <br />
+              <strong style={{ color: 'var(--toa-bone)' }}>Admin PIN</strong> is required for all server control actions (stop, start, restart). Set or change it via <code style={{ color: 'var(--toa-gold-bright)' }}>servers\set-pin.ps1</code>.
             </div>
           </div>
         </div>
+
+        {/* PIN MODAL */}
+        {pinModal?.open && (
+          <div
+            onClick={cancelPin}
+            style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0,0,0,0.7)', zIndex: 200,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="toa-seal-card"
+              style={{
+                padding: '2rem', maxWidth: '400px', width: '90%',
+                position: 'relative', textAlign: 'center',
+              }}
+            >
+              <div className="toa-seal-corner toa-seal-corner-tl" />
+              <div className="toa-seal-corner toa-seal-corner-br" />
+              <Lock size={28} style={{ color: 'var(--toa-gold-bright)', marginBottom: '1rem' }} />
+              <div style={{ fontFamily: 'var(--toa-font-display)', fontWeight: 700, fontSize: '1.1rem', color: 'var(--toa-gold-bright)', marginBottom: '0.5rem' }}>
+                Admin PIN Required
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--toa-muted)', marginBottom: '1.5rem' }}>
+                Enter your admin PIN to: <strong style={{ color: 'var(--toa-bone)' }}>{pinModal.label}</strong>
+              </div>
+              <input
+                type="password"
+                value={pinInput}
+                onChange={(e) => { setPinInput(e.target.value); setPinError(false); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') submitPin(); if (e.key === 'Escape') cancelPin(); }}
+                autoFocus
+                placeholder="Enter PIN"
+                style={{
+                  width: '100%', padding: '0.75rem 1rem', marginBottom: '1rem',
+                  background: 'rgba(0,0,0,0.3)', border: `1px solid ${pinError ? 'var(--toa-danger)' : 'rgba(184,155,94,0.3)'}`,
+                  borderRadius: '4px', color: 'var(--toa-bone)', fontSize: '1rem',
+                  fontFamily: 'var(--toa-font-display)', textAlign: 'center', letterSpacing: '0.3em',
+                  outline: 'none',
+                }}
+              />
+              {pinError && (
+                <div style={{ fontSize: '0.8rem', color: 'var(--toa-danger)', marginBottom: '1rem' }}>
+                  Invalid PIN. Please try again.
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                <button
+                  onClick={cancelPin}
+                  className="toa-btn toa-btn-ghost"
+                  style={{ fontSize: '0.85rem', padding: '0.5rem 1.2rem' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={submitPin}
+                  disabled={!pinInput}
+                  className="toa-btn"
+                  style={{ fontSize: '0.85rem', padding: '0.5rem 1.2rem', background: 'var(--toa-gold)', borderColor: 'var(--toa-gold)', color: '#1a1a1a' }}
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </GlobalTheme>

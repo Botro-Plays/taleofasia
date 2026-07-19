@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import { userDB } from '@/lib/db';
-import { execFile, spawn } from 'child_process';
+import { execFile } from 'child_process';
 import { readFileSync, existsSync, writeFileSync, unlinkSync, statSync } from 'fs';
 import { join } from 'path';
 import { promisify } from 'util';
 import { createSocket } from 'dgram';
+import { createHash } from 'crypto';
 
 const execFileAsync = promisify(execFile);
 
 const SERVERS_BASE = 'C:\\taleofasia-server-project\\servers';
 const PAUSE_FILE = join(SERVERS_BASE, 'monitor.pause');
 const LOG_FILE = join(SERVERS_BASE, 'monitor.log');
+const CONTROL_SCRIPT = join(SERVERS_BASE, 'server-control.ps1');
+const PIN_HASH_FILE = join(SERVERS_BASE, 'admin-pin.hash');
+const POWERSHELL_EXE = 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
 
 const SERVER_PATHS: Record<string, string> = {
   'login-server': join(SERVERS_BASE, 'login-server', 'Server.exe'),
@@ -147,7 +151,7 @@ async function getServerStatus() {
       const pidFilter = validPids.map(p => `ProcessId=${p}`).join(' OR ');
       const { stdout } = await execFileAsync('powershell', [
         '-NoProfile', '-Command',
-        `Get-CimInstance Win32_Process -Filter "${pidFilter}" | ForEach-Object { [PSCustomObject]@{ ProcessId = $_.ProcessId; CreationDate = $_.CreationDate.ToString('o') } } | ConvertTo-Json -Compress`,
+        `Get-CimInstance Win32_Process -Filter "${pidFilter}" | ForEach-Object { [PSCustomObject]@{ ProcessId = $_.ProcessId; CreationDate = if ($_.CreationDate) { $_.CreationDate.ToString('o') } else { $null } } } | ConvertTo-Json -Compress`,
       ], { timeout: 10000, encoding: 'utf-8', windowsHide: true });
 
       const parsed = JSON.parse(stdout.trim());
@@ -254,6 +258,33 @@ export async function GET() {
   }
 }
 
+function verifyPin(pin: string): boolean {
+  try {
+    if (!existsSync(PIN_HASH_FILE)) return false;
+    const storedHash = readFileSync(PIN_HASH_FILE, 'utf-8').trim();
+    const providedHash = createHash('sha256').update(pin).digest('hex');
+    return storedHash === providedHash;
+  } catch {
+    return false;
+  }
+}
+
+// Actions that require PIN verification (destructive operations)
+const PIN_REQUIRED_ACTIONS = new Set([
+  'restart-all', 'restart-games', 'stop-server', 'start-server',
+]);
+
+// Launch server-control.ps1 as a fully detached process via Start-Process.
+// This is more reliable than spawn({detached:true}) from PM2's Node.js process.
+async function launchControlScript(args: string[]): Promise<void> {
+  const allArgs = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', CONTROL_SCRIPT, ...args];
+  const argList = allArgs.map(a => `'${a.replace(/'/g, "''")}'`).join(',');
+  const psCommand = `Start-Process -FilePath '${POWERSHELL_EXE}' -ArgumentList @(${argList}) -WindowStyle Normal`;
+  await execFileAsync(POWERSHELL_EXE, [
+    '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', psCommand,
+  ], { timeout: 15000, windowsHide: true });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -269,6 +300,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { action } = body;
 
+    // Pause/resume don't require PIN
     if (action === 'pause') {
       if (!existsSync(PAUSE_FILE)) {
         writeFileSync(PAUSE_FILE, new Date().toISOString());
@@ -283,68 +315,58 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ monitoringPaused: false, message: 'Monitoring resumed' });
     }
 
-    if (action === 'restart-all') {
-      // Spawn monitor.ps1 with -ForceRestart in the background (non-blocking)
-      // The script takes 60-90+ seconds; we don't wait for it to finish
-      const child = spawn(
-        'powershell',
-        ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1', '-ForceRestart'],
-        { detached: true, stdio: 'ignore' }
-      );
-      child.unref();
+    // All other actions require PIN
+    if (PIN_REQUIRED_ACTIONS.has(action)) {
+      const pin = body.pin as string | undefined;
+      if (!pin) {
+        return NextResponse.json({ error: 'Admin PIN required for this action', pinRequired: true }, { status: 403 });
+      }
+      if (!verifyPin(pin)) {
+        return NextResponse.json({ error: 'Invalid admin PIN', pinRequired: true }, { status: 403 });
+      }
+    }
 
+    if (action === 'restart-all') {
+      await launchControlScript(['-Action', 'restart-all']);
       return NextResponse.json({
-        message: 'Full restart initiated. Servers will come back online in 60-90 seconds. Monitor the log for progress.',
+        message: 'Full restart initiated. Login server starts first, then Game Server 1 after ~50s, then Game Server 2 after ~25s more. Monitor the log for progress.',
         restartInitiated: true,
       });
     }
 
     if (action === 'restart-games') {
-      // Spawn monitor.ps1 with -ForceRestartGames in the background (non-blocking)
-      const child = spawn(
-        'powershell',
-        ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1', '-ForceRestartGames'],
-        { detached: true, stdio: 'ignore' }
-      );
-      child.unref();
-
+      await launchControlScript(['-Action', 'restart-games']);
       return NextResponse.json({
-        message: 'Game server restart initiated. Servers will come back online in 20-40 seconds. Monitor the log for progress.',
+        message: 'Game server restart initiated. Game Server 1 starts first, then Game Server 2 after ~30s. Monitor the log for progress.',
         restartInitiated: true,
       });
     }
 
-    if (action === 'restart-game1') {
-      const child = spawn(
-        'powershell',
-        ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1', '-ForceRestartGame1'],
-        { detached: true, stdio: 'ignore' }
-      );
-      child.unref();
-
+    if (action === 'stop-server') {
+      const serverKey = body.serverKey as string | undefined;
+      if (!serverKey) {
+        return NextResponse.json({ error: 'serverKey is required' }, { status: 400 });
+      }
+      await launchControlScript(['-Action', 'stop', '-Server', serverKey]);
       return NextResponse.json({
-        message: 'Game Server 1 restart initiated. It will be back online in ~10 seconds.',
-        restartInitiated: true,
+        message: `Stop command sent for ${serverKey}.`,
       });
     }
 
-    if (action === 'restart-game2') {
-      const child = spawn(
-        'powershell',
-        ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', 'C:\\taleofasia-server-project\\servers\\monitor.ps1', '-ForceRestartGame2'],
-        { detached: true, stdio: 'ignore' }
-      );
-      child.unref();
-
+    if (action === 'start-server') {
+      const serverKey = body.serverKey as string | undefined;
+      if (!serverKey) {
+        return NextResponse.json({ error: 'serverKey is required' }, { status: 400 });
+      }
+      await launchControlScript(['-Action', 'start', '-Server', serverKey]);
       return NextResponse.json({
-        message: 'Game Server 2 restart initiated. It will be back online in ~10 seconds.',
-        restartInitiated: true,
+        message: `Start command sent for ${serverKey}.`,
       });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     console.error('Error in server monitor action:', error);
-    return NextResponse.json({ error: 'Failed to perform action' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to perform action: ' + String(error) }, { status: 500 });
   }
 }
